@@ -1,4 +1,5 @@
 ## 1. Sqoop을 사용한 데이터 RDB 데이터 추출
+[Exercises 참고]https://github.com/Lee-Ho-Young/Bigdata_0311/edit/master/Sqoop_exercise.md
 
 ### 1-1. Sqoop : RDB to HDFS
 
