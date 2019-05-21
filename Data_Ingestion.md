@@ -86,8 +86,42 @@ sqoop import \
 
 ### 1-2. Sqoop : RDB to Hive
 
-```
+<ul>
+ <li> 테이블명만 주면 Default Database 테이블 </li>
+ <li> Database 설정을 위해선 Hive에서 미리 Database 생성해야 함 [CREATE DATABASE userdb;] </li>
+ <li> hive-import 옵션이 붙을경우 target-dir 옵션은 의미가 없어짐 </li>
+ <li> Hive로 가져올때도, 여러가지 조건을 주면서 가져올 수 있으니 조합 잘 할 것 </li>
+</ul>
 
+```
+####1 기본형 [1개의 테이블을 Default database import]
+sqoop import \
+--connect "jdbc:mysql://localhost/loudacre" \
+--username training \
+--password training \
+--table accountdevice \
+--hive-import \
+--hive-table accountdevice
+
+####2 기본형 [1개의 테이블을 특정 database import]
+sqoop import \
+--connect "jdbc:mysql://localhost/loudacre" \
+--username training \
+--password training \
+--table accountdevice \
+--hive-import \
+--hive-table userDatabase.accountdevice
+
+####3 import-all-tables to hive
+sqoop import-all-tables \
+--connect jdbc:mysql://<hostname>:3306/<database> \
+--username <username>\
+--password <password> \
+--hive-import \
+--hive-database <database_name> \
+--autoreset-to-one-mapper \
+--hive-overwrite \
+--create-hive-table
 ```
 
 
