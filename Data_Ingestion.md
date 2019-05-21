@@ -42,6 +42,28 @@ agent1.sources.src1.channels = ch1
 ### 2-2. Flume : exec source - hdfs sink
 
 ```
+# Define sources, sinks, and channel for agent named 'agent1'
+agent1.sources = src1
+agent1.sinks = sink1
+agent1.channels = ch1
 
+# Configure the source
+agent1.sources.src1.type = exec
+agent1.sources.src1.command = tail -F /var/flume/incoming/weblogs.log
+
+# Configure the channel
+agent1.channels.ch1.type = memory
+agent1.channels.ch1.capacity = 1000
+agent1.channels.ch1.transactionCapacity = 100
+
+# Configure the sink
+agent1.sinks.sink1.type = hdfs
+agent1.sinks.sink1.hdfs.path = /loudacre/logdata
+agent1.sinks.sink1.hdfs.fileType = DataStream
+agent1.sinks.sink1.hdfs.fileSuffix = .txt
+
+#Bind the source and sink to the channel
+agent1.sinks.sink1.channel = ch1
+agent1.sources.src1.channels = ch1
 ```
 
