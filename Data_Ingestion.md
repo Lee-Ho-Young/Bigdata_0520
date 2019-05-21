@@ -2,9 +2,34 @@
 
 ### 1-1. Sqoop : RDB to HDFS
 
+1. 에러가 발생할 경우 localhost를 지정해둔 hostname으로 변경해볼것
+2. 에러가 발생할 경우 아래의 Driver옵션문구도 추가해 볼것
+   [ --driver com.mysql.jdbc.Driver ]
+```
+sqoop import \
+--connect "jdbc:mysql://localhost/loudacre" \
+--username training \
+--password training \
+--table accountdevice \
+--delete-target-dir \
+--target-dir /loudacre/mysql/accountdevice
+```
+
 ### 1-2. Sqoop : RDB to Hive
 
 ### 1-3. Hive : HDFS directory to Hive table
+
+[참고]https://blogs.msdn.microsoft.com/data_otaku/2016/12/20/exploring-the-hive-import-and-export-commands/
+```
+## Create Hive Table with HDFS files
+CREATE TABLE ManagedUnpartitioned (
+column1 STRING
+)
+ROW FORMAT DELIMITED
+FIELDS TERMINATED BY '\t'
+STORED AS TEXTFILE
+LOCATION '/demo/managedunpartitioned/';
+```
 
 ### 1-4. Sqoop : Data format
 
