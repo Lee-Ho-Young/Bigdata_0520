@@ -15,9 +15,7 @@ sqoop import \
 --target-dir /loudacre/mysql/accountdevice
 ```
 
-### 1-2. Sqoop : RDB to Hive
 [참고]http://hochul.net/blog/datacollector_apache_sqoop_from_rdbms2/
-
 ```
 ####1 특정 테이블 데이터 import 
    mysql.example.com의 MySQL DB내 mydb Database에 접속하여 acclog 라는 테이블 전체를 Import 하여 Hadoop 저장하는 기본적인 방법
@@ -85,6 +83,14 @@ sqoop import \
    --num-mappers 10 \
    --direct
 ```
+
+### 1-2. Sqoop : RDB to Hive
+
+```
+
+```
+
+
 
 ### 1-3. Hive : HDFS directory to Hive table
 
