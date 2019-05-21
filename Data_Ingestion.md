@@ -19,9 +19,14 @@ sqoop import \
 
 ### 1-3. Hive : HDFS directory to Hive table
 
+<ul>
+ <li> Create table with schema </li>
+ <li> Import table with metadata file </li>
+</ul>
+
 [참고]https://blogs.msdn.microsoft.com/data_otaku/2016/12/20/exploring-the-hive-import-and-export-commands/
 ```
-## Create Hive Table with HDFS files
+## Create table with schema
 CREATE TABLE ManagedUnpartitioned (
 column1 STRING
 )
@@ -29,6 +34,9 @@ ROW FORMAT DELIMITED
 FIELDS TERMINATED BY '\t'
 STORED AS TEXTFILE
 LOCATION '/demo/managedunpartitioned/';
+
+## Import table with metadata file
+IMPORT TABLE tablename FROM 'targeted import location';
 ```
 
 ### 1-4. Sqoop : Data format
