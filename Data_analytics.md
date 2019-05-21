@@ -51,6 +51,7 @@ $ show databases;
 $ use default;
 $ select current_database();
 $ show tables;
+$ describe customer_address
 
 $select count(distinct c_birth_month) from customer;
 
@@ -89,3 +90,101 @@ ROW FORMAT DELIMITED FIELDS TERMINATED BY ','
 LOCATION '/user/username/sample_data/tab2';
 ```
 
+
+#### 예제1
+
+
+```
+-- Calculating the Top N Products
+ 
+SELECT 
+      p.prod_id
+    , count(*) AS CNT
+FROM products p     
+    JOIN order_details od
+        ON p.prod_id = od.prod_id
+    JOIN orders o
+        ON od.order_id = o.order_id
+GROUP BY prod_id
+ORDER BY CNT DESC
+LIMIT 3
+;
+ 
+ 
+-- Calculating the Order Total
+ 
+SELECT 
+      o.order_id
+    , SUM(p.price)  AS ord_price
+FROM products p     
+    JOIN order_details od
+        ON p.prod_id = od.prod_id
+    JOIN orders o
+        ON od.order_id = o.order_id
+GROUP BY o.order_id
+ORDER BY ord_price DESC
+LIMIT 10
+;
+ 
+ 
+-- Calculating Revenue and Profit
+ 
+SELECT
+      order_date
+    , sum(price)                as revenue               
+    , sum(price) - sum(cost)    as profit 
+FROM
+(
+SELECT 
+      o.order_id
+    , p.prod_id
+    , p.price               
+    , p.cost                
+    , to_date(o.order_date) AS order_date
+FROM products p     
+    JOIN order_details od
+        ON p.prod_id = od.prod_id
+    JOIN orders o
+        ON od.order_id = o.order_id
+        
+) AS T1
+GROUP BY order_date
+ORDER BY order_date
+;
+ 
+ 
+-- Bonus Exercise 1: Ranking Daily Profits by Month (미완성)
+ 
+SELECT
+	order_date
+	RANK() OVER (PARTITION BY year ORDER BY profit DESC) AS year_rank
+	--RANK() OVER(PARTITION BY year, month ORDER BY profit) AS month_rank
+FROM
+(
+SELECT
+      order_date
+    , year
+    , month           
+    , sum(price) - sum(cost)    as profit 
+FROM
+(
+SELECT 
+      o.order_id
+    , p.prod_id
+    , p.price               
+    , p.cost                
+    , to_date(o.order_date) AS order_date
+    , year(to_date(o.order_date)) AS year
+    , month(to_date(o.order_date)) AS month
+FROM products p     
+    JOIN order_details od
+        ON p.prod_id = od.prod_id
+    JOIN orders o
+        ON od.order_id = o.order_id
+        
+) AS T1
+GROUP BY order_date, year, month
+ORDER BY order_date
+) AS T2
+;
+```
