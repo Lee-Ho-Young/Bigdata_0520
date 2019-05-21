@@ -23,7 +23,7 @@
 <ul>
  <li> CENTOS 7 </li>
  <li> JDK 1.78 </li>
- <li> CDH 5.16</li>
+ <li> CDH 5.15</li>
 </ul>
 
 ## AWS Instance 접속
@@ -78,8 +78,8 @@ $ sudo yum install -y wget
 </ul>
 
 ```
-$ systemctl stop firewalld.service
-$ systemctl disable firewalld.service
+$ systemctl stop firewalld
+$ systemctl disable firewalld
 ```
 
 ### 3. Selinux 정지 [보안 프로그램]
@@ -144,9 +144,8 @@ $ ntpq -p
 #### 2. 모든 서버의 root계정 passwd 설정.
 
 ```
-$sudo su 
+$passwd root //root계정의 비밀번호 설정하기
 ```
--- passwd 를 admin으로 입력.
 
 #### 3. 모든 서버에서 host 파일에 서버정보입력
 -- /etc로 이동.
@@ -160,38 +159,48 @@ private ip4 slave3
 private ip5 slave4
 ```
 
-#### 4. 모든 서버에서 sshd_config 파일 편집
+#### 4. 모든 서버에서 서버의 실제 Hostname 변경
+
+```
+$ hostname    //현재 세팅된 서버의 호스트명 출력
+$ hostnamectl set-hostname master //호스트명을 master로 설정
+```
+
+#### 5. 모든 서버에서 sshd_config 파일 편집
 
 ```
 $ sudo vi /etc/ssh/sshd_config 
 ```
 -- PasswordAuthentication yes로 설정 및 저장.
 
-#### 5. 설정 후 서비스 restart
+
+#### 6. 설정 후 서비스 restart
 
 ```
-$sudo service sshd restart
+$ sudo service sshd restart
 ```
 
-#### 6. (master노드만) ssh 용 public key 생성하기     
+#### 7. (master노드만) ssh 용 public key 생성하기     
 
+keygen의 결과로 2개의 파일이 새로 생긴 것을 알 수 있다.
 ``` 
-$ssh-keygen
+$ssh-keygen [이후에 입력창에는 엔터만 계속 누르면 된다.]
 ```
 
-#### 7. 1~5번까지 각 노드에서 완료 후 master노드에서 slave노드로 public key 정보 복사하기.
+#### 8. 1~5번까지 각 노드에서 완료 후 master노드에서 slave노드로 public key 정보 복사하기.
 
 ```
-$cd /.ssh 이동
-$sudo ssh-copy-id -i ~/.ssh/id_rsa.pub slave4.
+$ cd ~/.ssh 이동
+$ ssh-copy-id root@slave1 [ssh-copy-id username@remote_host]
 ```
--- (permission denied 문제가 발생하면 앞의 config 파일 및 서비스 재시작 여부 확인)
-     
-#### 8.  master root계정에서 ssh로 slave에 접속하기.
+-- permission denied 문제가 발생하면 앞의 config 파일 및 서비스 재시작 여부 확인
+   [6번 과정에서의 오류가 있었을 수 있기 때문에, 오류가 나는 호스트에 접속하여 확인]
+   
+   
+#### 9.  master root계정에서 ssh로 slave에 접속 [설정여부 확인]
 
 ```
-$sudo su
-$ssh hostname
+$ ssh slave1
 ```
 
 ### 6. 추가적인 설정 [성능이슈]
@@ -237,14 +246,34 @@ $ sudo sysctl -w vm.swappiness=1   // 스왑값
 [참고]https://www.cloudera.com/documentation/enterprise/5-15-x/topics/install_cm_server.html
 
 ### Configure a repository for cloudera manager
-1. Download the cloudera-manager.repo file for your OS version to the /etc/yum.repos.d/ directory on the Cloudera Manager Server host
+
+1. Download the cloudera-manager.repo file for your OS version to the /etc/yum.repos.d/ directory on the Cloudera Manager Server host [CDH가 아니라 cloudera-manager를 다운받아야 함]
 ```
-$sudo wget https://archive.cloudera.com/cdh5/redhat/7/x86_64/cdh/cloudera-cdh5.repo -P /etc/yum.repos.d/
+$ sudo wget https://archive.cloudera.com/cm5/redhat/7/x86_64/cm/cloudera-manager.repo -P /etc/yum.repos.d/
+```
+
+2. change the baseurl within cloudera-manager.repo to fit the version you want to install
+```
+$ cd /etc/yum.repos.d/cloudera-manager.repo
+
+<AS-IS>
+# Packages for Cloudera Manager, Version 5, on RedHat or CentOS 7 x86_64         
+name=Cloudera Manager
+baseurl=https://archive.cloudera.com/cm5/redhat/7/x86_64/cm/5/
+gpgkey =https://archive.cloudera.com/cm5/redhat/7/x86_64/cm/RPM-GPG-KEY-cloudera 
+gpgcheck = 1
+
+<TO-BE>
+# Packages for Cloudera Manager, Version 5, on RedHat or CentOS 7 x86_64         
+name=Cloudera Manager
+baseurl=https://archive.cloudera.com/cm5/redhat/6/x86_64/cm/5.15.2/
+gpgkey =https://archive.cloudera.com/cm5/redhat/7/x86_64/cm/RPM-GPG-KEY-cloudera 
+gpgcheck = 1
 ```
 
 2. Import the repository signing GPG key [RHEL 7]
 ```
-$sudo rpm --import https://archive.cloudera.com/cm5/redhat/7/x86_64/cm/RPM-GPG-KEY-cloude 
+$sudo rpm --import https://archive.cloudera.com/cm5/redhat/7/x86_64/cm/RPM-GPG-KEY-cloudera
 ```
 
 ### Install JDK on all hosts
@@ -405,7 +434,7 @@ CREATE DATABASE nav DEFAULT CHARACTER SET DEFAULT COLLATE utf8_general_ci;
 CREATE DATABASE navms DEFAULT CHARACTER SET DEFAULT COLLATE utf8_general_ci;
 CREATE DATABASE oozie DEFAULT CHARACTER SET DEFAULT COLLATE utf8_general_ci;
 
-<권한>
+<계정생성 및 권한부여>
 GRANT ALL ON scm.* TO  'scm'@'%' IDENTIFIED BY 'scm';   
 GRANT ALL ON amon.* TO  'amon'@'%' IDENTIFIED BY 'amon';   
 GRANT ALL ON rman.* TO  'rman'@'%' IDENTIFIED BY 'rman';  
@@ -439,26 +468,206 @@ $ netstat -antp | grep 7180                                     //서버의 defa
 
 #### 1.Specify hosts for your CDH cluster installation
 
+
 #### 2.Select Repository
+
+
 #### 3.Accept JDK License
  > a. cloudera manager 호스트에만 JDK를 깔았기 때문에 설치하기로 설정해야 함
+
 
 #### 4. Single User Mode
  > a. 체크하지 않음
 
+
 #### 5. Enter Login Credentials
- > a. root 계정으로 접속하기 위한 비밀번호를 설정해야 함
- > b. root로 접속 / 비밀번호 : admin [현재 세팅이 그렇게 되었음]
+ > a. root 계정 비밀번호를 입력
+ > b. root로 접속 / 비밀번호 : admin
+
 
 #### 6. Install Agents
-  > a. 5개 서버의 [Private IP FQDN] 정보 5줄을 입력하고 다음으로 넘어가면 검색결과 확인
+ > a. 5개 서버의 [Private IP] 정보 5줄을 입력하고 다음으로 넘어가면 검색결과 확인
 
 
-#### 7.Install Parcels 
-  > a. 여기 단계에서 Disk Full 발생하여 Roll-back 재시작의 무한반복 
+#### 7. Install Parcels 
+ > a. 기본 패키지 설치
   
+  
+#### 8. Select Services 
+ > 아래의 옵션들 중에서 하나를 선택하여 설치 진행 [Cloudera Navigator 설치안함]
 
-![Alt text](https://github.com/gogohs/skccBigData/blob/master/result1.png)
-![Alt text](https://github.com/gogohs/skccBigData/blob/master/result2.png)
+	Core Hadoop
+	HDFS, YARN (MapReduce 2 Included), ZooKeeper, Oozie, Hive, and Hue
+
+	Core with HBase
+	HDFS, YARN (MapReduce 2 Included), ZooKeeper, Oozie, Hive, Hue, and HBase
+
+	Core with Impala
+	HDFS, YARN (MapReduce 2 Included), ZooKeeper, Oozie, Hive, Hue, and Impala
+
+	Core with Search
+	HDFS, YARN (MapReduce 2 Included), ZooKeeper, Oozie, Hive, Hue, and Solr
+
+	Core with Spark
+	HDFS, YARN (MapReduce 2 Included), ZooKeeper, Oozie, Hive, Hue, and Spark
+
+	All Services
+	HDFS, YARN (MapReduce 2 Included), ZooKeeper, Oozie, Hive, Hue, HBase, Impala, Solr, Spark, and Key-Value Store Indexer
+
+	Custom Services
+	Choose your own services. Services required by chosen services will automatically be included. Flume can be added 
+	after your initial cluster has been set up.
 
 
+#### 9. Assign Roles 
+
+ > 8번 단계에서 선택한 서비스들의 각 요소들을 어느 서버에 배치할 것인지 선택
+
+ > DB를 사용하는 서비스들의 경우 JDBC Connector가 설치된 곳에 배치해야만 한다.
+ 
+ > RDB를 사용하는 Component List
+    [참고]https://www.cloudera.com/documentation/enterprise/latest/topics/cm_ig_installing_configuring_dbs.html
+
+<ul>
+ <li> Oozie Server </li>
+ <li> Sqoop Server </li>
+ <li> Activity Monitor </li>
+ <li> Reports Manager </li>
+ <li> Hive Metastore Server </li>
+ <li> Hue Server </li>
+ <li> Sentry Server </li>
+ <li> Cloudera Navigator Audit Server </li>
+ <li> Cloudera navigator metadata Server </li>
+</ul>
+ 
+ > Recommended Cluster setting
+  [참고]https://www.cloudera.com/documentation/enterprise/5-15-x/topics/cm_ig_host_allocations.html#host_role_assignments
+ 
+ ![Alt text](https://github.com/gogohs/skccBigData/blob/master/recommended_set.PNG)
+  
+ 
+ > 실습결과
+   ![Alt text](https://github.com/gogohs/skccBigData/blob/master/service설정1.PNG)
+   ![Alt text](https://github.com/gogohs/skccBigData/blob/master/service설정2.PNG)
+   ![Alt text](https://github.com/gogohs/skccBigData/blob/master/service설정3.PNG)
+   
+   
+## 실습환경 세팅
+ 
+### 1. training 계정 생성
+ 
+#### 1-1. Linux 계정생성
+```
+$ adduser training
+$ passwd training
+$ usermod -aG wheel training
+## 원래는 visudo에서 주석해제 단계가 있는데 우선은 하지말자
+```
+ 
+#### 1-2. HDFS 계정생성
+
+<수동생성>
+```
+$ sudo -u hdfs hdfs dfs -mkdir /user/training 	         //계정생성
+$ sudo -u hdfs hdfs dfs -chown training /user/training   //계정소유자 변경
+
+## 참고사항 : HDFS디렉토리의 권한을 변경하고 싶을경우
+$ sudo -u hdfs hdfs dfs -chmod 777 /user/training
+```
+
+<자동생성>
+Hue UI에 처음 접속을 training 계정으로 할 경우, training계정은 자동으로 HUE admin 계정이 되고
+자동으로 HDFS 계정도 생성된다.
+
+
+### 2. local data file [all.zip]
+ 
+ [Git Bash] First, go to training_materials directory and then upload.
+ ```
+$ scp -r training_materials training@13.209.155.34:/home/training
+ ```
+
+### 3. setup.sh
+
+#### 3-1. setup.sh 돌려보면 mysql의 training 계정과 관련된 오류 발생
+```
+[training@master scripts]$ sh setup.sh
+[setup.sh] Course setup started at: Tue May 21 14:50:25 KST 2019
+[setup.sh] Setting up course environment variables
+[setup.sh] Setting up the loudacre database in MySQL
+ERROR 1044 (42000) at line 1: Access denied for user 'training'@'localhost' to database 'loudacre'
+ERROR 1044 (42000) at line 1: Access denied for user 'training'@'localhost' to database 'loudacre'
+ERROR 1044 (42000): Access denied for user 'training'@'localhost' to database 'loudacre'
+[setup.sh] Setting up iPython notebook/Jupyter
+[setup.sh] Setting up Hive/Impala table for demo/exercises
+put: `/user/hive/warehouse/accounts/part-m-00000': File exists
+put: `/user/hive/warehouse/accounts/part-m-00001': File exists
+put: `/user/hive/warehouse/accounts/part-m-00002': File exists
+put: `/user/hive/warehouse/accounts/part-m-00003': File exists
+put: `/user/hive/warehouse/accounts/part-m-00004': File exists
+Starting Impala Shell without Kerberos authentication
+Error connecting: TTransportException, Could not connect to master:21000
+Not connected to Impala, could not execute queries.
+[setup.sh] Course setup completed at: Tue May 21 14:50:27 KST 2019
+```
+
+#### 3-2. MariaDB에 training 게정을 생성
+
+```
+$ mysql -u root -p
+
+## 모든 호스트에서 접속하는(%) training계정에, 모든 Database에 대한, 모든 권한 부여
+$ GRANT ALL ON *.* TO 'training'@'%' IDENTIFIED BY 'training';
+$ FLUSH PRIVILEGES;
+
+## training 계정에 대한 권한을 중복으로 부여하면, 아래의 결과가 2줄이 나오고, 1줄을 지워주면 정상작동
+$ select * from mysql.user where user ='training';
++-----------+----------+
+| Host      | User     |
++-----------+----------+
+| %         | training |
+| localhost | training |
++-----------+----------+
+```
+
+#### 3-3. training DB계정 생성 후 setup.sh 실행
+```
+[training@master scripts]$ sh setup.sh
+[setup.sh] Course setup started at: Tue May 21 15:31:39 KST 2019
+[setup.sh] Setting up course environment variables
+[setup.sh] Setting up the loudacre database in MySQL
+[setup.sh] Setting up iPython notebook/Jupyter
+[setup.sh] Setting up Hive/Impala table for demo/exercises
+put: `/user/hive/warehouse/accounts/part-m-00000': File exists
+put: `/user/hive/warehouse/accounts/part-m-00001': File exists
+put: `/user/hive/warehouse/accounts/part-m-00002': File exists
+put: `/user/hive/warehouse/accounts/part-m-00003': File exists
+put: `/user/hive/warehouse/accounts/part-m-00004': File exists
+Starting Impala Shell without Kerberos authentication
+Connected to master:21000
+Server version: impalad version 2.12.0-cdh5.15.2 RELEASE (build bbf711e1a54a8451225a3f8c82f83d78bdac23d2)
+Query: -- # setup accounts table
+DROP TABLE IF EXISTS accounts
+Query submitted at: 2019-05-21 15:31:42 (Coordinator: http://master:25000)
+Query progress can be monitored at: http://master:25000/query_plan?query_id=d3468dc4e687ddcc:7a3d00200000000
+Fetched 0 row(s) in 3.84s
+Query: CREATE EXTERNAL TABLE accounts (
+	acct_num INT,
+	acct_create_dt TIMESTAMP,
+	acct_close_dt  TIMESTAMP,
+	first_name VARCHAR(255)  ,
+	last_name VARCHAR(255) ,
+	address  VARCHAR(255) ,
+	city  VARCHAR(255) ,
+	state VARCHAR(255) ,
+	zipcode VARCHAR(255) ,
+	phone_number VARCHAR(255) ,
+	created TIMESTAMP  ,
+	modified TIMESTAMP)
+	ROW FORMAT DELIMITED
+	FIELDS TERMINATED BY ','
+Fetched 0 row(s) in 0.03s
+[setup.sh] Course setup completed at: Tue May 21 15:31:45 KST 2019
+```
+
+## File-system / Database 데이터를 사용한 자유로운 데이터 분석시간
