@@ -7,6 +7,10 @@
 2. 에러가 발생할 경우 아래의 Driver옵션문구도 추가해 볼것
    [ --driver com.mysql.jdbc.Driver ]
 ```
+sqoop list-tables \
+--connect jdbc:mysql://localhost/loudacre \
+--username training --password training
+
 sqoop import \
 --connect "jdbc:mysql://localhost/loudacre" \
 --username training \
