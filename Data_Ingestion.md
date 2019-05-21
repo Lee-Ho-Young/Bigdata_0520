@@ -16,6 +16,75 @@ sqoop import \
 ```
 
 ### 1-2. Sqoop : RDB to Hive
+[참고]http://hochul.net/blog/datacollector_apache_sqoop_from_rdbms2/
+
+```
+####1 특정 테이블 데이터 import 
+   mysql.example.com의 MySQL DB내 mydb Database에 접속하여 acclog 라는 테이블 전체를 Import 하여 Hadoop 저장하는 기본적인 방법
+   sqoop import \
+   --connect jdbc:mysql://mysql.example.com/mydb \
+   --username sqoop \
+   --password sqoop \
+   --table acclog \
+   --target-dir /teststore/input/acclog
+
+####2 DB내 전체 테이블 Import 
+   mydb Database에 접속하여 2개 테이블(cities, countires)를 제외한 테이블 전체를 Import
+   sqoop import-all-tables \
+   --connect jdbc:mysql://mysql.example.com/mydb \
+   --username sqoop \
+   --password sqoop \
+   --exclude-tables cities,countries \
+   --warehouse-dir /teststore/input/
+
+####3 Mapper 개수 지정 
+   mydb Database 의 acclog 테이블 전체의 데이터를 가져올 때 10개의 mapper 수를 지정함으로써 Hadoop 처리 속도를 조절 할 수 있다.
+   시스템상황을 고려해서 개수를 설정하면 된다. 
+   sqoop import \
+   --connect jdbc:mysql://mysql.example.com/mydb \
+   --username sqoop \
+   --password sqoop \
+   --table acclog \
+   --target-dir /teststore/input/acclog \
+   --num-mappers 10
+
+####4 일부 데이터, 조건에 맞는 데이터 가져오기 
+   A) --incremental 옵션 사용 [증분추가]
+        [ acclog 테이블의 seq 칼럼값이 8910000 이상인 것만 import ]
+      acclog 테이블의 seq 칼럼값이 8910000 이상인 것만 import
+        sqoop import \
+        --connect jdbc:mysql://mysql.example.com/mydb \
+        --username sqoop \
+        --password sqoop \
+        --table acclog \
+        --target-dir /teststore/input/acclog \
+        --num-mappers 10 \
+        --incremental append \
+        --check-column seq \
+        --last-value 8910000
+		
+   B) 특정 Query 조건에 맞는 데이터 가져오기
+        sqoop import \
+        --connect jdbc:mysql://mysql.example.com/mydb \
+        --username sqoop \
+        --password sqoop \
+        --target-dir /teststore/input/acclog \
+        --query 'SELECT seq, inputdate, searchkey \
+                   FROM acclog
+                   WHERE seq > 10' \
+        --num-mappers 10 
+		
+####5 데이터 전송속도 높이기 --direct 옵션 
+   --direct 옵션을 사용하여 DataBase의 Native Tool, 예를 들어 mysqldump를 활용하여 보다 빠르게 데이터를 가져올 수 있다.
+   sqoop import \
+   --connect jdbc:mysql://mysql.example.com/mydb \
+   --username sqoop \
+   --password sqoop \
+   --table acclog \
+   --target-dir /teststore/input/acclog \
+   --num-mappers 10 \
+   --direct
+```
 
 ### 1-3. Hive : HDFS directory to Hive table
 
