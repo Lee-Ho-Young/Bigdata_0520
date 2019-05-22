@@ -8,11 +8,14 @@
  
 
 #### 2
- > 172.31.10.113 util.hadoop.com util
- > 172.31.8.187 master.hadoop.com master
- > 172.31.8.247 slave1.hadoop.com slave1
- > 172.31.2.171 slave2.hadoop.com slave2
- > 172.31.10.153 slave3.hadoop.com slave3
+
+<ul>
+ <li> 172.31.10.113 util.hadoop.com util </li>
+ <li> 172.31.8.187 master.hadoop.com master </li>
+ <li> 172.31.8.247 slave1.hadoop.com slave1 </li>
+ <li> 172.31.2.171 slave2.hadoop.com slave2 </li>
+ <li> 172.31.10.153 slave3.hadoop.com slave3 </li>
+</ul>
 
 #### 3
 
@@ -30,3 +33,18 @@
 
 ##### Host5
 ![Alt text](https://github.com/Lee-Ho-Young/bigdata_0520/blob/master/contents/linux버전확인_호스트5.PNG)
+
+#### 4
+![Alt text](https://github.com/Lee-Ho-Young/bigdata_0520/blob/master/contents/fileSystemCapacity.PNG)
+
+#### 5
+![Alt text](https://github.com/Lee-Ho-Young/bigdata_0520/blob/master/contents/yumRepoListEnabled.PNG)
+
+#### 6
+![Alt text](https://github.com/Lee-Ho-Young/bigdata_0520/blob/master/contents/etc_passwd_entries.PNG)
+
+#### 7
+![Alt text](https://github.com/Lee-Ho-Young/bigdata_0520/blob/master/contents/etc_groups_entries.PNG)
+
+#### 8
+![Alt text](https://github.com/Lee-Ho-Young/bigdata_0520/blob/master/contents/getent_command_list.PNG)
