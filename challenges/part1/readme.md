@@ -48,3 +48,30 @@
 
 #### 8
 ![Alt text](https://github.com/Lee-Ho-Young/bigdata_0520/blob/master/contents/getent_command_list.PNG)
+
+
+### b Install a MySQL Server
+
+#### 1
+
+#### 2
+![Alt text](https://github.com/Lee-Ho-Young/bigdata_0520/blob/master/contents/b_2.PNG)
+
+#### 3
+![Alt text](https://github.com/Lee-Ho-Young/bigdata_0520/blob/master/contents/b_3.PNG)
+
+
+### c Install Cloudera Manager
+
+#### 1
+![Alt text](https://github.com/Lee-Ho-Young/bigdata_0520/blob/master/contents/c_i.PNG)
+
+#### 2
+
+#### 3
+![Alt text](https://github.com/Lee-Ho-Young/bigdata_0520/blob/master/contents/c_3.PNG)
+
+#### 4
+![Alt text](https://github.com/Lee-Ho-Young/bigdata_0520/blob/master/contents/c_4.PNG)
+
+여기까지입니다..
