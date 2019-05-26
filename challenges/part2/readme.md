@@ -13,6 +13,12 @@
 
 ## 1. Write a query to compare each active account’s balance to the average balance of all active accounts of the same type.
 
+<ul>
+ <li> Run a sql file with hive CMD </li>
+ <li> Round func. </li>
+</ul>
+
+
 ```
 SELECT 
       A.ID                   AS ID
@@ -45,7 +51,6 @@ WHERE A.TYPE = B.TYPE
 ![Alt text](https://github.com/Lee-Ho-Young/bigdata_0520/blob/master/contents/1-1.PNG)
 ![Alt text](https://github.com/Lee-Ho-Young/bigdata_0520/blob/master/contents/1-2.PNG)
 ![Alt text](https://github.com/Lee-Ho-Young/bigdata_0520/blob/master/contents/1-3.PNG)
-
 
 
 
@@ -91,7 +96,12 @@ and a.amount < 0
 
 ## 4. LoudAcre Mobile has merged with another company located in California. Each company has a list of customers in different formats. Combine the two customer lists into a single dataset using an identical schema.
 
-* 확인필요 사항 : union all 밖에 되지 않음, employee2 파일형식 이상함
+<ul>
+ <li> Create table </li>
+ <li> Dynamic schema control </li>
+ <li> Hive to HDFS </li>      
+</ul>
+
 
 ```
 create database problem4;
@@ -161,6 +171,7 @@ WHERE state = 'CA'
 ![Alt text](https://github.com/Lee-Ho-Young/bigdata_0520/blob/master/contents/4-1.PNG)
 ![Alt text](https://github.com/Lee-Ho-Young/bigdata_0520/blob/master/contents/4-2.PNG)
 ![Alt text](https://github.com/Lee-Ho-Young/bigdata_0520/blob/master/contents/4-3.PNG)
+
 
 
 
