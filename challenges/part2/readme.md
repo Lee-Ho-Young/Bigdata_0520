@@ -1,3 +1,49 @@
+# Bigdata_0522
+
+*Company Name : SK C&C*
+
+*Company ID : 09340*
+
+*Name : 이호영*
+
+
+![Alt text](https://github.com/Lee-Ho-Young/Bigdata_0416/blob/master/picture.png)
+
+
+
+## 1. Write a query to compare each active account’s balance to the average balance of all active accounts of the same type.
+
+```
+
+SELECT 
+      A.ID                   AS ID
+    , A.TYPE                 AS TYPE
+    , A.STATUS               AS TYPE
+    , A.AMOUNT               AS AMOUNT
+    , ROUND((A.AMOUNT - B.AVERAGE),3) AS DIFFERENCE
+FROM 
+(
+    SELECT
+          ID
+        , TYPE
+        , STATUS
+        , AMOUNT
+    FROM ACCOUNT
+    WHERE STATUS = 'Active'
+) A,
+(
+    SELECT 
+          TYPE
+        , AVG(AMOUNT) AVERAGE
+    FROM ACCOUNT
+    WHERE STATUS = 'Active'
+    GROUP BY TYPE
+) B
+WHERE A.TYPE = B.TYPE
+;
+```
+
+
 
 ## 2. Create an employee table in the metastore that contains the employee records stored in HDFS.
 
@@ -41,6 +87,8 @@ and a.amount < 0
 ## 4. LoudAcre Mobile has merged with another company located in California. Each company has a list of customers in different formats. Combine the two customer lists into a single dataset using an identical schema.
 
 ```
+create database problem4;
+
 CREATE EXTERNAL TABLE problem4.employee1 (
     customer_id int,
     first_name string,
@@ -69,10 +117,9 @@ FIELDS TERMINATED BY "," ESCAPED BY '\\'
 STORED AS textfile
 LOCATION 'hdfs:///user/training/problem4/data/employee2';
 
-
-SELECT distinct length(CAST(customer_id as string)) FROM EMPLOYEE1; -- 8
-SELECT distinct length(CAST(customer_id as string)) FROM EMPLOYEE1; -- 8
-
+select distinct(length(customer_id)) from employee1; --result : 8
+select distinct(length(customer_id)) from employee2; --result : 8
+select * from employee2 where state = 'CA' -- 0 result
 
 CREATE TABLE problem4.employee2 (
     customer_id int,
@@ -107,3 +154,5 @@ SELECT
 FROM EMPLOYEE1
 WHERE
 ```
+
+## 5. 
