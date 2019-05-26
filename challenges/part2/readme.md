@@ -19,7 +19,7 @@ SELECT
     , A.TYPE                 AS TYPE
     , A.STATUS               AS TYPE
     , A.AMOUNT               AS AMOUNT
-    , ROUND((A.AMOUNT - B.AVERAGE),3) AS DIFFERENCE
+    , ROUND((A.AMOUNT - B.AVERAGE),2) AS DIFFERENCE
 FROM 
 (
     SELECT
