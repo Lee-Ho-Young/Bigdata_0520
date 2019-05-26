@@ -14,7 +14,6 @@
 ## 1. Write a query to compare each active account’s balance to the average balance of all active accounts of the same type.
 
 ```
-
 SELECT 
       A.ID                   AS ID
     , A.TYPE                 AS TYPE
@@ -42,6 +41,12 @@ FROM
 WHERE A.TYPE = B.TYPE
 ;
 ```
+
+![Alt text](https://github.com/Lee-Ho-Young/bigdata_0520/blob/master/contents/1-1.PNG)
+![Alt text](https://github.com/Lee-Ho-Young/bigdata_0520/blob/master/contents/1-2.PNG)
+![Alt text](https://github.com/Lee-Ho-Young/bigdata_0520/blob/master/contents/1-3.PNG)
+
+
 
 
 
