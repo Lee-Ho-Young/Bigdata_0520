@@ -91,6 +91,8 @@ and a.amount < 0
 
 ## 4. LoudAcre Mobile has merged with another company located in California. Each company has a list of customers in different formats. Combine the two customer lists into a single dataset using an identical schema.
 
+* 확인필요 사항 : union all 밖에 되지 않음, employee2 파일형식 이상함
+
 ```
 create database problem4;
 
@@ -126,38 +128,59 @@ select distinct(length(customer_id)) from employee1; --result : 8
 select distinct(length(customer_id)) from employee2; --result : 8
 select * from employee2 where state = 'CA' -- 0 result
 
-CREATE TABLE problem4.employee2 (
-    customer_id int,
-    last_name string,
-    first_name string,
-    address string,
-    city string,
-    state string,
-    zip_code string
-) AS
-SELECT 
+CREATE TABLE problem4.employee3 
+AS 
+SELECT * FROM
+(
+SELECT
     CUSTOMER_ID
-    , first_name
-    , last_name
+    , initcap(first_name) as first_name
+    , initcap(last_name) as last_name
     , address
     , city
     , state
-    , zip_code
+    , cast(substr(zip_code,1,5) as int) as zip_code 
 FROM EMPLOYEE1
-WHERE
+WHERE state = 'CA'
 
-UNION
+UNION ALL
 
 SELECT 
     CUSTOMER_ID
-    , first_name
-    , last_name
+    , initcap(first_name) as first_name
+    , initcap(last_name) as last_name
     , address
     , city
     , state
-    , zip_code
-FROM EMPLOYEE1
-WHERE
+    , cast(substr(zip_code,1,5) as int) as zip_code 
+FROM EMPLOYEE2
+WHERE state = 'CA'
+) unioned
 ```
 
-## 5. 
+![Alt text](https://github.com/Lee-Ho-Young/bigdata_0520/blob/master/contents/4-1.PNG)
+![Alt text](https://github.com/Lee-Ho-Young/bigdata_0520/blob/master/contents/4-2.PNG)
+![Alt text](https://github.com/Lee-Ho-Young/bigdata_0520/blob/master/contents/4-3.PNG)
+
+
+
+## 5. The bank is making a Facebook group for the Palo Alto, CA branch. Generate a script that outputs the customers and employees who live in Palo Alto, CA.
+
+
+## 6. There are privacy concerns about the employee data that is stored on the cluster. Your task is to remove any age information from the employee data by creating a new table for the data analysts to query against.
+
+
+## 7. Generate a report that contains all of the Seattle employee names in sorted order.
+
+
+## 8. Use Sqoop to export customer data from HDFS into a MySQL database table. Place the data in the solution table in MySQL, which has been created and is currently empty.
+
+
+## 9. Your company is being acquired by another company. To prepare for this acquisition, update the customer records to guarantee there will be no duplicate IDs with their existing customer IDs.
+
+
+## 10. Your boss needs specialized reports using the billing data and is constantly asking for help to write SQL queries. Create a database view in the metastore so that your boss has customer and billing data joined.
+
+
+## 11. Several analysis questions are described below and you will need to write the SQL code to answer them. You can use whichever tool you prefer – Impala or Hive – using whichever method you like best, including shell, script, or the Hue Query Editor, to run your queries.
+
