@@ -152,18 +152,19 @@ $passwd root //root계정의 비밀번호 설정하기
 ```
 sudo vi etc/hosts
 
-private ip1 master
-private ip2 slave1
-private ip3 slave2
-private ip4 slave3
-private ip5 slave4
+private_ip1 master.hadoop.com master
+private_ip2 slave1.hadoop.com slave1
+private_ip3 slave2.hadoop.com slave2
+private_ip4 slave3.hadoop.com slave3
+private_ip5 slave4.hadoop.com slave4
 ```
 
 #### 4. 모든 서버에서 서버의 실제 Hostname 변경
 
 ```
 $ hostname    //현재 세팅된 서버의 호스트명 출력
-$ hostnamectl set-hostname master //호스트명을 master로 설정
+$ hostnamectl set-hostname master.hadoop.com //호스트명을 master.hadoop.com으로 설정
+  [하지만 화면에는 해당 hostname의 약칭인 master가 표시되고, master 키워드로 호스트명 ]
 ```
 
 #### 5. 모든 서버에서 sshd_config 파일 편집
