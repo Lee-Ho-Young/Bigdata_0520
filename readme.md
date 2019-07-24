@@ -67,7 +67,6 @@ $ systemctl list-unit-files --type=service //자동실행 설정된 서비스 �
 
 ```
 $ sudo yum update
-$ sudo yum install -y wget
 ```
 
 ### 2. firewall 정지 [방화벽 정지, CentOs 7부터 iptables -> firewalld 변경]
@@ -128,7 +127,7 @@ $ sudo vi /etc/ntp.conf
 #server 2.centos.pool.ntp.org
 server kr.pool.ntp.org 
 server time.bora.net
-server time.kornet.net
+
 
 $ systemctl start ntpd
 $ systemctl enable ntpd
