@@ -349,6 +349,17 @@ $sudo yum install cloudera-manager-daemons cloudera-manager-agent
 
 #### 1. Installing MariaDB Server
 
+##### 참고사항 #####
+- SCM를 실행할 때, MariaDB 10.2.8 버전 위에서는 DDL 쿼리에 대한 수정이 필요
+- CentOS 기본 패키지로 포함된 MariaDB를 사용할 경우 DDL 문제는 없다.
+
+- SCM서버를 시작할 때 혹은 scm_prepare_database.sh을 돌릴때, scm@localhost에 접속이
+  안된다고 나올때가 있다. 모든 절차가 정상적인데 지속적으로 발생할 경우에는 로컬호스트 용
+  scm 계정을 생성해 버리는 것도 하나의 방법이다.
+```
+GRANT ALL ON *.* TO  'scm'@'localhost' IDENTIFIED BY 'scm';  
+```
+
 ```
 $ sudo yum install mariadb-server
 ```
@@ -434,7 +445,7 @@ CREATE DATABASE nav DEFAULT CHARACTER SET DEFAULT COLLATE utf8_general_ci;
 CREATE DATABASE navms DEFAULT CHARACTER SET DEFAULT COLLATE utf8_general_ci;
 CREATE DATABASE oozie DEFAULT CHARACTER SET DEFAULT COLLATE utf8_general_ci;
 
-<계정생성 및 권한부여>
+<계정생성 및 권한부여 (CDH 5버전)>
 GRANT ALL ON scm.* TO  'scm'@'%' IDENTIFIED BY 'scm';   
 GRANT ALL ON amon.* TO  'amon'@'%' IDENTIFIED BY 'amon';   
 GRANT ALL ON rman.* TO  'rman'@'%' IDENTIFIED BY 'rman';  
@@ -444,6 +455,19 @@ GRANT ALL ON sentry.* TO  'sentry'@'%' IDENTIFIED BY 'sentry';
 GRANT ALL ON nav.* TO  'nav'@'%' IDENTIFIED BY 'nav';  
 GRANT ALL ON navms.* TO  'navms'@'%' IDENTIFIED BY 'navms';  
 GRANT ALL ON oozie.* TO  'oozie'@'%' IDENTIFIED BY 'oozie';  
+FLUSH PRIVILEGES;
+
+<계정생성 및 권한부여 (CDH 6버전)>
+GRANT ALL ON *.* TO  'scm'@'%' IDENTIFIED BY 'scm';   
+GRANT ALL ON *.* TO  'amon'@'%' IDENTIFIED BY 'amon';   
+GRANT ALL ON *.* TO  'rman'@'%' IDENTIFIED BY 'rman';  
+GRANT ALL ON *.* TO  'hue'@'%' IDENTIFIED BY 'hue';  
+GRANT ALL ON *.* TO  'hive'@'%' IDENTIFIED BY 'hive';  
+GRANT ALL ON *.* TO  'sentry'@'%' IDENTIFIED BY 'sentry';  
+GRANT ALL ON *.* TO  'nav'@'%' IDENTIFIED BY 'nav';  
+GRANT ALL ON *.* TO  'navms'@'%' IDENTIFIED BY 'navms';  
+GRANT ALL ON *.* TO  'oozie'@'%' IDENTIFIED BY 'oozie';  
+FLUSH PRIVILEGES;
 ```
 
 ### Set up the Cloudera Manager Database
@@ -459,7 +483,7 @@ MariaDB의 경우 세팅할때 mysql 옵션 사용
 #### 2.cloudera-scm-manager Database 설정 후 재기동 시, 에러없이 서버가 정상적으로 올라감   
 
 ```
-$ systemctl cloudera-scm-server restart
+$ systemctl restart cloudera-scm-server
 $ tail -f /var/log/cloudera-scm-server/cloudera-scm-server.log  //로그확인
 $ netstat -antp | grep 7180                                     //서버의 default port도 떴다.
 ```
