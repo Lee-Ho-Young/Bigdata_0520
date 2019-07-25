@@ -346,9 +346,6 @@ $sudo yum install cloudera-manager-daemons cloudera-manager-agent
 <li>필요한 계정 생성</li> 
 </ol>
 
-
-#### 1. Installing MariaDB Server
-
 ##### 참고사항 #####
 - SCM를 실행할 때, MariaDB 10.2.8 버전 위에서는 DDL 쿼리에 대한 수정이 필요
 - CentOS 기본 패키지로 포함된 MariaDB를 사용할 경우 DDL 문제는 없다.
@@ -359,6 +356,9 @@ $sudo yum install cloudera-manager-daemons cloudera-manager-agent
 ```
 GRANT ALL ON *.* TO  'scm'@'localhost' IDENTIFIED BY 'scm';  
 ```
+
+
+#### 1. Installing MariaDB Server
 
 ```
 $ sudo yum install mariadb-server
