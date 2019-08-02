@@ -1,0 +1,43 @@
+input 
+ { beats
+   {
+    port=>"8790"
+    codec=>plain  
+   }
+ } 
+
+  output 
+ { 
+  if [fields][app_group] == "anycatcher"
+   {
+     if [fields][app_id] == "os" 
+     {
+      kafka
+      {
+        bootstrap_servers=>'150.2.237.16:6667'
+        topic_id=>'1-anycatcher1-os'
+        codec=>json { charset => "UTF-8" } 
+      }
+     }
+   }
+  }
+
+
+$ ./bin/logstash agent –f config/logstash.config –auto-reload
+
+
+pipelines.yml
+- pipeline.id: sysmaster
+   path.config: "/usr/share/logstash/connectconf/tibero.conf"
+   pipeline.workers : 6 
+- pipeline.id: anycatcher
+   path.config: "/usr/share/logstash/connectconf/anycatcher.conf"
+   pipeline.workers : 6
+- pipeline.id: ontune
+   path.config: "/usr/share/logstash/connectconf/ontune.conf"
+   pipeline.workers : 4
+
+
+
+
+$ nohup ./bin/logstash --path.settings /etc/logstash 1> /dev/null 2>&1 &
