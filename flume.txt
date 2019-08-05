@@ -1,0 +1,47 @@
+$ nohup /home/bigdata/flume/apache-flume-1.8.0-bin/bin/flume-ng agent -c conf -f /home/bigdata/flume/apache-flume-1.8.0-bin/conf/anycatcher-conf.properties -n anycatcher 1> /dev/null 2>&1 &
+ 
+ 
+ 
+ 
+ 
+#Name the components on this agent
+anycatcher.sources = r1
+anycatcher.sinks = k1
+anycatcher.channels = c1
+ 
+## Configure the Kafka Source ##
+anycatcher.sources.r1.type = org.apache.flume.source.kafka.KafkaSource
+anycatcher.sources.r1.batchSize = 1000
+anycatcher.sources.r1.batchDurationMillis = 2000
+anycatcher.sources.r1.kafka.bootstrap.servers = 150.2.237.16:6667,150.2.237.17:6667
+anycatcher.sources.r1.kafka.topics = 1-anycatcher1-os
+anycatcher.sources.r1.kafka.consumer.group.id = flume_anycatcher_os
+ 
+## Describe the sink ##
+anycatcher.sinks.k1.type = hdfs
+anycatcher.sinks.k1.hdfs.path = /user/flume/kafka-data/1-anycatcher1-os/%y%m%d/%H
+anycatcher.sinks.k1.hdfs.filePrefix = 1-anycatcher1-os
+ 
+## Describing sink with the problem of Encoding ##
+anycatcher.sinks.k1.hdfs.fileType = DataStream
+anycatcher.sinks.k1.hdfs.writeFormat = Text
+ 
+## Describing sink with the problem of many hdfs files ##
+### Roll a file after certain amount of events occurs  ###
+anycatcher.sinks.k1.hdfs.rollInterval = 0
+anycatcher.sinks.k1.hdfs.rollSize = 0
+anycatcher.sinks.k1.hdfs.rollCount = 10000
+anycatcher.sinks.k1.hdfs.batchSize = 100
+anycatcher.sinks.k1.hdfs.idleTimeout = 300
+anycatcher.sinks.k1.hdfs.closeTries = 0
+anycatcher.sinks.k1.hdfs.retryInterval = 200
+ 
+## Use a channel which buffers events in memory ##
+anycatcher.channels.c1.type = memory
+anycatcher.channels.c1.capacity = 10000
+anycatcher.channels.c1.transactionCapacity = 1000
+ 
+## Bind the source and sink to the channel ##
+anycatcher.sources.r1.channels = c1
+anycatcher.sinks.k1.channel = c1
+ 
