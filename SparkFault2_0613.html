@@ -1,0 +1,240 @@
+<!DOCTYPE HTML>
+<html>
+  <head lang="ko">
+    <title>Spark Fault 수집</title>
+    <meta charset="UTF-8">
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+	<!-- 
+		1. Row갯수 count
+		2. onUpdate 함수에 일정Row 갯수 넘어가면 아래서 부터 짜르도록 설정
+		3. 상세한 모양은 그 다음에 볼 것
+	-->
+		
+	<style>
+      #jb-container {
+        width: 90%;
+		//height:860px;
+		float: center;
+        margin: 0px auto;
+        padding: 1%;
+        border: 1px solid #bcbcbc;
+      }
+      #jb-header {
+		height:30px;
+        padding: 2%;
+        margin-bottom: 10px;
+        border: 1px solid #bcbcbc;
+      }
+      #jb-content {
+        width: 70%;
+		height: 610px;
+        padding: 2%;
+        margin-bottom: 10px;
+        float: right;
+        border: 1px solid #bcbcbc;
+      }
+      #jb-sidebar {
+        width: 20%;
+		height: 610px;
+        padding: 2%;
+        margin-bottom: 10px;
+        float: left;
+        border: 1px solid #bcbcbc;
+      }
+      #jb-footer {
+	  	height:20px;
+        clear: both;
+        padding: 2%;
+        border: 1px solid #bcbcbc;
+      }  
+
+		.scrolltbody {
+			display: block;
+			width: 900px;
+			border-collapse: collapse;
+		}
+		.scrolltbody th { text-align: center; text-valign: middle; }
+		.scrolltbody td { text-align: center; text-valign: middle; }
+		.scrolltbody tbody {
+			display: block;
+			height: 600px;
+			overflow: auto;
+		}
+		.scrolltbody th:nth-of-type(1), .scrolltbody td:nth-of-type(1) { width: 160px; border-top: 0;}
+		.scrolltbody th:nth-of-type(2), .scrolltbody td:nth-of-type(2) { width: 130px; border-top: 0;}
+		.scrolltbody th:nth-of-type(3), .scrolltbody td:nth-of-type(3) { width: 110px; border-top: 0;}
+		.scrolltbody th:last-child { width: 500px; }
+		.scrolltbody td:last-child { width: calc( 500px - 19px );  }
+
+		thead tr {
+			background-color: #0d47a1;
+			color: #ffffff;
+			font-size: 14pt;
+		}
+		tbody tr:nth-child(2n) {
+			background-color: #bbdefb;
+			font-size: 12pt;
+		}
+		tbody tr:nth-child(2n+1) {
+			background-color: #d3e2fd;
+			font-size: 12pt;		
+		}
+		table {
+			border: 1px solid #444444;
+			margin-left: auto;
+			margin-right: auto;
+		}
+
+
+	</style>
+  </head>
+  
+
+  
+<body>
+
+
+    <div id="jb-container">
+		<div id="jb-header">
+			<b>EVENT 통합 그리드</b>
+		</div>
+		
+		<div id="jb-sidebar">
+		
+			<ol>
+				<li><b>Performance</b></li>
+				<ul>
+					<li><a href="AnycatcherOS.html">[Syslog] OS성능</a></li>
+					<li><a href="AnycatcherOS.html">[Anycatcher] OS성능</a></li>
+					<li><a href="AnycatcherDisk.html">[Anycatcher] DISK성능</a></li>
+					<li><a href="AnycatcherNW.html">[Anycatcher] NW성능</a></li>
+					<li><a href="OntuneLastPerf.html">[Ontune] LastPerf</a></li>
+					<li><a href="SysmasterRespTime.html">[Sysmaster] RespTime</a></li>
+					<li><a href="SysmasterThread.html">[Sysmaster] Thread</a></li>
+				</ul>
+				
+				<br><br>
+				
+				<li><b>Alarm Event</b></li>		
+				<ul>
+					<li><a href="SparkFault2_0613.html">EVNET 통합 그리드</a></li>
+				</ul>
+			</ol>
+		
+		</div>
+		
+		<div id="jb-content">
+		
+			<table id="table1" class='scrolltbody'>
+				<thead>
+					<tr>
+						<th>발생 시간</th>
+						<th>서버 명</th>
+						<th>Source</th>
+						<th>이벤트 내용</th>
+					</tr>
+				</thead>
+				<tbody id="eventInfo">
+				</tbody>
+			</table>	
+			
+			
+		</div>
+      
+		<div id="jb-footer">
+			<div><pre id="incomming"></pre></div>
+		</div>
+    </div>
+	
+	 <input type="hidden" id="topicName" name="topicName" value="1-sysmaster1-thread">
+
+
+</body>
+
+  <script type="text/javascript">
+    var eventInfo = document.getElementById ('eventInfo');
+	var timerId;
+	onConnection ();											// Puseh Server에 연결 요청
+	onUpdate ();
+	
+	function onConnection () {
+		console.log('connecting to server..');
+        try {
+			ws = new WebSocket ('ws://10.250.160.214:8090');
+			ws.onmessage = function (evt) {
+//				console.log ("Received message : " + evt.data)
+				insertEvent (evt.data)
+			};
+          
+			ws.onopen = function () {
+				connection = true;
+				clearTimeout (timerId);
+				console.log ('...connetion open 1 : ' + connection);
+				ws.send ("Topic=1-anycatcher1-fault,Server=ALL")
+				console.log ("Topic=1-anycatcher1-fault,Server=ALL")
+			};
+          
+			ws.onclose = function () {
+				connection = false;
+				ws.close ();
+				console.log('...connection closed: ' + connection);
+				timerId = setTimeout ("onConnection ()", 1000);             // 1초 Timeout.
+			};
+
+			ws.onerror = function (message) {
+				if (connection == true) {
+					connection = false;
+					console.log('...connection error: ' + connection);
+					timerId = setTimeout ("onConnection ()", 1000);             // 1초 Timeout.
+				}
+			}
+        } catch (exception) {
+        }
+	};
+	
+	function insertEvent (eventInfo) {
+		var temp = ""
+		for (var i = 0; i < eventInfo.length; ++ i) {
+			if (eventInfo[i] == '\\')
+				temp = temp + '\\';
+			temp = temp + eventInfo [i];
+		}
+		var message = JSON.parse (temp);
+		var year = message.event_time.substring (0, 4);
+		var month = message.event_time.substring (4, 6);
+		var day = message.event_time.substring (6, 8);
+		var hour = message.event_time.substring (8, 10);
+		var minute = message.event_time.substring (10, 12);
+		var second = message.event_time.substring (12, 14);
+		if (second == "")
+			second = "00"
+		message.event_time = year + "-" + month + "-" + day + " " + hour + ":" + minute + ":" + second
+		//console.log ("수신 data : " + message.event_time + ", event_data : " + eventInfo);
+
+		onUpdate (message);
+	}
+	function onUpdate (message) {
+		if (message != null) {
+			var eventInfo = document.getElementById ('eventInfo');
+			var row = eventInfo.insertRow (0);
+			var cell1 = row.insertCell (0);
+			cell1.innerHTML = message.event_time;
+			var cell2 = row.insertCell (1);
+			cell2.innerHTML = message.hst_nm;
+			var cell3 = row.insertCell (2);
+			cell3.innerHTML = message.source;
+			var cell4 = row.insertCell (3);
+			cell4.style.cssText = "text-align: left";
+			cell4.innerHTML = message.err_contents;
+			
+			var rows = document.getElementById("table1").getElementsByTagName("tr").length;
+			if(rows > 100) {
+				var table1 = document.getElementById("table1");
+				table1.deleteRow(table1.rows.length - 1); //최하단부터 삭제
+			}
+		}
+
+	}
+  </script>
+  
+</html>

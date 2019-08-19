@@ -1,0 +1,463 @@
+<!DOCTYPE HTML>
+<meta charset="utf-8">
+<head>
+<!-- 4개의 그래프 : cpu, mem, swap, mem_free  -->
+
+    <style>
+      #jb-container {
+        width: 90%;
+		//height:860px;
+		float: center;
+        margin: 0px auto;
+        padding: 1%;
+        border: 1px solid #bcbcbc;
+      }
+      #jb-header {
+		height:30px;
+        padding: 2%;
+        margin-bottom: 10px;
+        border: 1px solid #bcbcbc;
+      }
+      #jb-content {
+        width: 70%;
+		height: 610px;
+        padding: 2%;
+        margin-bottom: 10px;
+        float: right;
+        border: 1px solid #bcbcbc;
+      }
+      #jb-sidebar {
+        width: 20%;
+		height: 610px;
+        padding: 2%;
+        margin-bottom: 10px;
+        float: left;
+        border: 1px solid #bcbcbc;
+      }
+      #jb-footer {
+	  	height:20px;
+        clear: both;
+        padding: 2%;
+        border: 1px solid #bcbcbc;
+      }  
+    </style>
+
+
+<script src="moment.js"></script>
+<script src="canvasjs.min.js"></script> 
+<script src="jquery-3.4.1.min.js"></script>
+</head>
+<body>
+
+
+    <div id="jb-container">
+		<div id="jb-header">
+			<b>[Syslog] OS성능</b>
+		</div>
+		
+		<div id="jb-sidebar">
+		
+			<ol>
+				<li><b>Performance</b></li>
+				<ul>
+					<li><a href="AnycatcherOS.html">[Syslog] OS성능</a></li>
+					<li><a href="AnycatcherOS.html">[Anycatcher] OS성능</a></li>
+					<li><a href="AnycatcherDisk.html">[Anycatcher] DISK성능</a></li>
+					<li><a href="AnycatcherNW.html">[Anycatcher] NW성능</a></li>
+					<li><a href="OntuneLastPerf.html">[Ontune] LastPerf</a></li>
+					<li><a href="SysmasterRespTime.html">[Sysmaster] RespTime</a></li>
+					<li><a href="SysmasterThread.html">[Sysmaster] Thread</a></li>
+				</ul>
+				
+				<br><br>
+				
+				<li><b>Alarm Event</b></li>		
+				<ul>
+					<li><a href="SparkFault2_0613.html">EVNET 통합 그리드</a></li>
+				</ul>
+			</ol>
+		
+		</div>
+		
+		<div id="jb-content">
+		
+			<div id="searchArea" style="height:30px; width:99%">
+				<input type="text" name="txtinput" id="txtinput" placeholder="호스트 검색" title="검색하고자 하는 서버명 입력" 
+					onkeypress="if(event.which == 13){onSearch(); return false;}else{return;}" style="display:inline-block; width:30%; height:26px;">
+				<button onclick="onSearch()" name="btnSearch" id="btnSearch" style="display:inline-block; width:10%; height:30px;">확인</button>
+			</div>
+		
+			<br><br>
+		
+			<div id="graphArea">
+				<div id="chartContainer1" style="height: 250px; width: 47%; display:inline-block;"></div> 
+				&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp
+				<div id="chartContainer2" style="height: 250px; width: 47%; display:inline-block;"></div>
+				<br><br><br>
+				<div id="chartContainer3" style="height: 250px; width: 47%; display:inline-block;"></div> 
+				&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp
+				<div id="chartContainer4" style="height: 250px; width: 47%; display:inline-block;"></div>
+			</div>
+			
+			
+			<!-- 정리되어야 할 Legacy Part -->
+			<!--
+				<input type="text" name="txtinput" id="txtinput">
+				<button onclick="onConfirm ()" name="btnConfirm" id="btnConfirm">확인</button><br/>
+				<button onclick="onClear ()" name="btnClear" id="btnClear">완료</button><br/>
+			-->	
+		</div>
+      
+		<div id="jb-footer">
+			<div><pre id="incomming"></pre></div>
+		</div>
+    </div>
+	
+	 <input type="hidden" id="topicName" name="topicName" value="1-anycatcher1-os">
+
+
+</body>
+<script>
+/*************** Global Variable ****************************/
+var updateInterval = 1000;
+// WebSocket
+      var inc = document.getElementById ('incomming');
+      var connection = false;
+      var timerId;
+      var ws;
+      var id;
+
+//Chart Data [Json Araay]
+var cpuUsage = [];
+var cpuAverage = [];
+var memUsage = [];
+var memAverage = [];
+var swapUsage = [];
+var swapAverage = [];
+var memFree = [];
+var memFreeAverage = [];
+
+/*************** Chart Data Receiving ***********************/
+
+// 그래프로 120개의 데이터를 표시할 것인데, 서버에서 120개 미만의 데이터를 처음에
+// 받게될 경우, 그래프가 깨지는 현상이 발생한다.
+// 혹시를 대비하여 처음에 그래프 화면을 띄울때, Default값으로 120개를 채우고, 서버에서
+// 받기 시작하는 것도 좋은 방법이다.
+
+rawData = [
+{"event_time":"20190605111900","hst_nm":"SKT-SYMPAP4","Topic":"1-anycatcher1-os","cpu":"0","avg_cpu":"0","mem":"0","avg_mem":"0","swap":"0","avg_swap":"0","mem_free":"0","avg_mem_free":"0"}
+]
+;
+
+ /**************************** Chart1 *****************************/
+ var chart1 = new CanvasJS.Chart("chartContainer1", {
+  animationEnabled: true,  //처음 그려질 때 효과
+  exportEnabled: true,  //우측 상단에 export 기능
+  title :{
+   text: "CPU 사용률"
+  },
+  axisY: {
+   title: "사용률(%)",
+   includeZero: true,
+   scaleBreaks: {
+    autoCalculate: false
+   }
+  },
+  toolTip: {
+   shared: true
+  },
+  legend:{     //범례 누르면 데이터 표시여부 선택가능
+   cursor:"pointer",
+   itemclick: toggleDataSeries  
+  },
+  data: [{
+    type: "spline",
+    name: "CPU Usage",
+    showInLegend: true,  //그래프 하단의 범례표시
+    xValueFormatString: "TT HH:mm 분",
+    yValueFormatString: "#0.## '%'",
+    markerSize: 3, 			//점 크기
+    dataPoints: cpuUsage   	//그래프 마우스오버 시 보여줄 데이터
+   },
+   {
+    type: "spline",
+    name: "CPU Average",
+    showInLegend: true,  //그래프 하단의 범례표시
+    xValueFormatString: "TT HH:mm 분",
+    yValueFormatString: "#0.## '%'",
+    markerSize: 3, 			//점 크기
+    dataPoints: cpuAverage  //그래프 마우스오버 시 보여줄 데이터
+   }
+  ]
+ });
+ /**************************** Chart2 *****************************/
+ var chart2 = new CanvasJS.Chart("chartContainer2", {
+  animationEnabled: true,  //처음 그려질 때 효과
+  exportEnabled: true,  //우측 상단에 export 기능
+  title :{
+   text: "Memory 사용률"
+  },
+  axisY: {
+   includeZero: true,
+   title: "사용률(%)",
+   scaleBreaks: {
+    autoCalculate: false
+   }
+  },
+  toolTip: {
+   shared: true
+  },
+  legend:{     //범례 누르면 데이터 표시여부 선택가능
+   cursor:"pointer",
+   itemclick: toggleDataSeries  
+  },
+  data: [{
+    type: "spline",
+    name: "MEM Usage",
+    showInLegend: true,  //그래프 하단의 범례표시
+    xValueFormatString: "TT HH:mm 분",
+    yValueFormatString: "#0.## '%'",
+    markerSize: 3, 			//점 크기
+    dataPoints: memUsage   	//그래프 마우스오버 시 보여줄 데이터
+   },
+   {
+    type: "spline",
+    name: "MEM Average",
+    showInLegend: true,  //그래프 하단의 범례표시
+    xValueFormatString: "TT HH:mm 분",
+    yValueFormatString: "#0.## '%'",
+    markerSize: 3,			//점 크기 
+    dataPoints: memAverage  //그래프 마우스오버 시 보여줄 데이터
+   }
+  ]
+ });
+
+ /**************************** Chart3 *****************************/ 
+  var chart3 = new CanvasJS.Chart("chartContainer3", {
+  animationEnabled: true,  //처음 그려질 때 효과
+  exportEnabled: true,  //우측 상단에 export 기능
+  title :{
+   text: "SWAP 사용률"
+  },
+  axisY: {
+   title: "사용률(%)",
+   includeZero: true,
+   scaleBreaks: {
+    autoCalculate: false
+   }
+  },
+  toolTip: {
+   shared: true
+  },
+  legend:{     //범례 누르면 데이터 표시여부 선택가능
+   cursor:"pointer",
+   itemclick: toggleDataSeries  
+  },
+  data: [{
+    type: "spline",
+    name: "SWAP Usage",
+    showInLegend: true,  //그래프 하단의 범례표시
+    xValueFormatString: "TT HH:mm 분",
+    yValueFormatString: "#0.## '%'",
+    markerSize: 3,			//점 크기 
+    dataPoints: swapUsage   //그래프 마우스오버 시 보여줄 데이터
+   },
+   {
+    type: "spline",
+    name: "SWAP Average",
+    showInLegend: true,  //그래프 하단의 범례표시
+    xValueFormatString: "TT HH:mm 분",
+    yValueFormatString: "#0.## '%'",
+    markerSize: 3,			 //점 크기 
+    dataPoints: swapAverage  //그래프 마우스오버 시 보여줄 데이터
+   }
+  ]
+ });
+ 
+ 
+ chart1.render();
+ chart2.render();
+ chart3.render();
+
+ var updateChart = function (newData) {
+  
+  //console.log("newData : " + newData );
+  
+  if(JSON.parse(newData).Topic == '1-anycatcher1-os') {
+  
+    var dateInfo  			= moment(JSON.parse(newData).event_time, 'YYYYMMDDkkmmss').toDate();
+	var tempCpuUsage  		= parseFloat(JSON.parse(newData).cpu);
+	var tempCpuAverage  	= parseFloat(JSON.parse(newData).avg_cpu);
+	var tempMemUsage  		= parseFloat(JSON.parse(newData).mem);
+	var tempMemAverage  	= parseFloat(JSON.parse(newData).avg_mem);
+	var tempSwapUsage  		= parseFloat(JSON.parse(newData).swap);
+	var tempSwapAverage  	= parseFloat(JSON.parse(newData).avg_swap);
+	
+	//console.log("tempCpuUsage : " + tempCpuUsage);
+	
+	cpuUsage.push(   {x: dateInfo, y: tempCpuUsage} );
+	cpuAverage.push(  {x: dateInfo, y: tempCpuAverage} );     
+	memUsage.push(   {x: dateInfo, y: tempMemUsage} );
+	memAverage.push(  {x: dateInfo, y: tempMemAverage} );
+	swapUsage.push(   {x: dateInfo, y: tempSwapUsage} );
+	swapAverage.push(  {x: dateInfo, y: tempSwapAverage} );
+  
+ } 
+  
+  if(cpuUsage.length > 30)
+	cpuUsage.shift();
+	
+  if(cpuAverage.length > 30)
+	cpuAverage.shift();
+	
+  if(memUsage.length > 30)
+	memUsage.shift();
+	
+  if(memAverage.length > 30)
+	memAverage.shift();
+	
+  if(swapUsage.length > 30)
+	swapUsage.shift();
+	
+  if(swapAverage.length > 30)
+	swapAverage.shift();
+
+  // 2. Redraw Charts
+  chart1.render();
+  chart2.render();
+  chart3.render();
+  
+ };
+ 
+ function toggleDataSeries(e) {
+  if(typeof(e.dataSeries.visible) === "undefined" || e.dataSeries.visible) {
+   e.dataSeries.visible = false;
+  }
+  else {
+   e.dataSeries.visible = true;            
+  }
+  chart1.render();
+  chart2.render();
+  chart3.render();
+ }
+ 
+ // WebSocket 연결
+ function onSearch () {
+ 
+	Send ();
+ }
+
+ function onClear () {
+	var jsonMsg = {ALARM_NO:"34343434"};
+	requestClear ();
+ }
+ 
+ function Send () {
+	
+	var strMessage = document.getElementById ("txtinput").value;
+	var topicName = document.getElementById ("topicName").value;
+	strMessage = 'Topic=' + topicName + ',Server=' + strMessage;
+	// 서버요청 형식 : Topic=1-anycatcher1-os,Server=SKT-ERPSPDB2
+	
+	try {
+	  ws.send (strMessage);
+	  beforeInnerHTML();
+	  inc.innerHTML += strMessage + '\n';
+	} catch (exception) {
+	  beforeInnerHTML();
+	  inc.innerHTML += 'Send Error \n';
+	}
+ };
+	  
+ function onConnection () {
+	beforeInnerHTML();
+	inc.innerHTML += 'connecting to server..\n';
+	
+		/* JSON data from server is already parsed */
+		//var temp_msg = {"event_time":"20190528171600","hst_nm":"SKT-SYMPAP4","type":"P","cpu":"2","avg_cpu":"7","mem":"52","avg_mem":"51","swap":"0","avg_swap":"0","max_swap":"48","avg_max_swap":"49"}
+		//console.log(temp_msg.type);
+	
+	try {
+		ws = new WebSocket ('ws://10.250.160.214:8090');
+                console.log("Is this working");
+		// 데이터 수신 Event 처리 함수
+		ws.onmessage = function (evt) {
+			console.log ("Received message : " + evt.data);
+	                		
+			var type = JSON.parse(evt.data).type;
+			//console.log("Received data_type : " + type);
+			
+			var newData = evt.data;
+			updateChart(newData);
+		};
+	  
+		ws.onopen = function () {
+		connection = true;
+		clearTimeout (timerId);
+		
+		beforeInnerHTML();
+		inc.innerHTML += '...connetion open 1 : ' + connection + '\n';
+		
+		ws.send ("ID=testing,Server=SKT-,UIKind=F")
+		console.log ("ID=testing,Server=ALL,UIKind=F")
+		};
+	  
+		ws.onclose = function () {
+		connection = false;
+		ws.close ();
+		
+		beforeInnerHTML();
+		inc.innerHTML += '...connection closed: ' + connection + '\n';
+		timerId = setTimeout ("onConnection ()", 1000);             // 1초 Timeout.
+	  };
+
+	} catch (exception) {
+	}
+ };
+ 
+ function beforeInnerHTML() {
+	var lines = document.getElementById ('incomming').textContent.split('\n');
+	
+	if(lines.length > 4) {
+		inc.innerHTML = '';
+		for(var i=1; i<lines.length; i++)
+			inc.innerHTML += lines[i];
+	}
+  };
+
+
+ window.onload = function () {
+
+  onConnection ();
+  
+ /**************************** Data Parsing ***********************/ 
+ 
+ /*
+ for(var i=0; i <rawData.length; i++) {
+  //더 간단하게 바꿀 수 있을겨
+  var dateInfo  			= moment(JSON.parse(JSON.stringify(rawData[i])).event_time, 'YYYYMMDDkkmmss').toDate();
+  var tempCpuUsage  		= Number(JSON.parse(JSON.stringify(rawData[i])).cpu);
+  var tempCpuAverage  		= Number(JSON.parse(JSON.stringify(rawData[i])).avg_cpu);
+  var tempMemUsage  		= Number(JSON.parse(JSON.stringify(rawData[i])).mem);
+  var tempMemAverage  		= Number(JSON.parse(JSON.stringify(rawData[i])).avg_mem);
+  var tempSwapUsage  		= Number(JSON.parse(JSON.stringify(rawData[i])).swap);
+  var tempSwapAverage  		= Number(JSON.parse(JSON.stringify(rawData[i])).avg_swap);
+  var tempMaxSwap  			= Number(JSON.parse(JSON.stringify(rawData[i])).max_swap);
+  var tempMaxSwapAverage	= Number(JSON.parse(JSON.stringify(rawData[i])).avg_max_swap);
+  
+  cpuUsage.push(   {x: dateInfo, y: tempCpuUsage} );
+  cpuAverage.push(  {x: dateInfo, y: tempCpuAverage} );     
+  memUsage.push(   {x: dateInfo, y: tempMemUsage} );
+  memAverage.push(  {x: dateInfo, y: tempMemAverage} );
+  swapUsage.push(   {x: dateInfo, y: tempSwapUsage} );
+  swapAverage.push(  {x: dateInfo, y: tempSwapAverage} );
+  maxSwap.push(   {x: dateInfo, y: tempMaxSwap} );
+  maxSwapAverage.push(  {x: dateInfo, y: tempMaxSwapAverage} );
+  
+ }
+ */
+  
+ setInterval(function(){  /* Some Function*/  }, updateInterval);
+} 
+</script>
+</html>
