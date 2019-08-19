@@ -1,3 +1,6 @@
+onkeypress="if(event.which == 13){search(); return false;}else{return;}"
+
+
 
 https://www.cloudera.com/documentation/enterprise/5-14-x/topics/cm_mc_yarn_service.html
 
