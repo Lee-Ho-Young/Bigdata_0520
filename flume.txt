@@ -68,6 +68,8 @@ tar -xvf
  
 5) Spark 프로그램 실행
  $  spark-submit --master yarn --deploy-mode client AnycatcherOs.jar 1000000
+ 
+ $ spark-submit --master yarn --deploy-mode cluster --jars /home/bigdata/spark/lib/jedis-2.4.2.jar AnycatcherOs.jar 1000000
 
 <기타명령>
 redis-cli shutdown
