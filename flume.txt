@@ -71,6 +71,8 @@ tar -xvf
  
  $ spark-submit --master yarn --deploy-mode cluster --jars /home/bigdata/spark/lib/jedis-2.4.2.jar AnycatcherOs.jar 1000000
 
+$ spark-submit --jars /home/bigdata/spark/lib/spark-streaming-kafka-0-8-assembly_2.11-2.4.3.jar --master yarn --deploy-mode client pyspark_streaming_kafka.py
+
 <기타명령>
 redis-cli shutdown
 
