@@ -80,5 +80,31 @@ redis-cli shutdown
 
 
 
+<시연관련>
+----------------------------------------------------------------
+
+# CM화면
+http://10.250.160.226:7180
+
+# YARN 화면
+http://10.250.160.226:8088
+
+# 카프카 홈
+$ cd /opt/cloudera/parcels/CDH-6.2.0-1.cdh6.2.0.p0.967373/lib/kafka/bin/
+
+# 카프카 컨수머
+$ ./kafka-console-consumer.sh --bootstrap-server master.hadoop.com:9092,slave1.hadoop.com:9092,slave2.hadoop.com:9092 --topic syslog
+
+# 카프카 프로듀서
+$ ./kafka-console-producer.sh --broker-list master.hadoop.com:9092,slave1.hadoop.com:9092,slave2.hadoop.com:9092 --topic temp11
+
+# 시연 2개
+spark-submit --jars /home/bigdata/spark/lib/spark-streaming-kafka-0-8-assembly_2.11-2.4.3.jar --master yarn --deploy-mode client --num-executors 2 pyspark_streaming_kafka.py
+
+# 시연 4개
+spark-submit --jars /home/bigdata/spark/lib/spark-streaming-kafka-0-8-assembly_2.11-2.4.3.jar --master yarn --deploy-mode client --num-executors 4 pyspark_streaming_kafka.py
+
+
+
 
 
