@@ -1,0 +1,81 @@
+* 데이터 형식
+hostname||YYMMDDHHmmSS||CPU||%user||%nice||%system||%iowait||%steal||%idle||MEM||%total||%used||%free||SWAP||%total||%used||%free
+
+* 데이터 의미
+    - 	CPU  
+ 
+
+* Spark관련 라이브러리 : 
+  $ cd /opt/cloudera/parcels/CDH-6.2.0-1.cdh6.2.0.p0.967373/jars
+
+* Kafka홈 
+  $ cd /opt/cloudera/parcels/CDH-6.2.0-1.cdh6.2.0.p0.967373/lib/kafka/bin/
+
+* Kafka 토픽 생성
+  $ ./kafka-topics.sh --create --zookeeper master.hadoop.com:2181 --replication-factor 2 --partitions 2 --topic test0802
+
+* Kafka 토픽 삭제
+  $ ./kafka-topics.sh --delete --zookeeper master.hadoop.com:2181 --topic test0802
+
+* Kafka 토픽 확인
+  $ ./kafka-topics.sh --list --zookeeper master.hadoop.com:2181
+
+* Kafka 토픽 상세확인
+  $ ./kafka-topics.sh --describe --zookeeper master.hadoop.com:2181 --topic test0802
+
+* Kafka 토픽 파티션 별 offset확인
+  $ ./kafka-run-class.sh kafka.tools.GetOffsetShell --broker-list master.hadoop.com:9092,slave1.hadoop.com:9092,slave2.hadoop.com:9092 --topic syslog
+
+* Kafka Console Producer
+  $ ./kafka-console-producer.sh --broker-list master.hadoop.com:9092,slave1.hadoop.com:9092,slave2.hadoop.com:9092 --topic syslog
+
+* Kafka Console Consumer [broker갯수를 2->3으로 높이니까 파티션 옵션없이 실행됨]
+  $ ./kafka-console-consumer.sh --bootstrap-server master.hadoop.com:9092,slave1.hadoop.com:9092,slave2.hadoop.com:9092 --topic syslog --from-beginning
+
+  $ ./kafka-console-consumer.sh --bootstrap-server master.hadoop.com:9092,slave1.hadoop.com:9092,slave2.hadoop.com:9092 --topic syslog --partition 0 --from-beginning
+
+
+* Filebeat 시작
+$ ./filebeat -e -c filebeat.yml
+
+$ nohup /home/bigdata/filebeat/filebeat-7.3.0-linux-x86_64/filebeat -e -c /home/bigdata/filebeat/filebeat-7.3.0-linux-x86_64/filebeat.yml 1> /dev/null 2>&1 &
+
+
+* Flume Agent 시작
+$ nohup /home/bigdata/flume/apache-flume-1.9.0-bin/bin/flume-ng agent -c conf -f /home/bigdata/flume/apache-flume-1.9.0-bin/conf/syslog-conf.properties -n syslog 1> /dev/null 2>&1 &
+
+
+* 압축해제
+tar -cvzf
+tar -xvf
+
+
+<프로그램 실행>
+0) Redis 실행 [slave1]
+ $ redis-server
+
+1) PushServer.java 실행 [slave1]
+ $ /home/bigdata/spark/rj PushServer
+
+2) Spark프로그램 수정 [slave1, 1개에서 성능/이벤트 모두 처리중]
+ $ vi /home/bigdata/spark/AnycatcherOs.scala
+
+3) Spark 프로그램 컴파일
+ $ /home/bigdata/spark/c AnycatcherOs.scala
+
+4) Saprk 프로그램 jar파일 묶기
+ $ /home/bigdata/spark/j AnycatcherOs
+ 
+5) Spark 프로그램 실행
+ $  spark-submit --master yarn --deploy-mode client AnycatcherOs.jar 1000000
+
+<기타명령>
+redis-cli shutdown
+
+
+
+
+
+
+
+
