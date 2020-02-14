@@ -1,0 +1,633 @@
+/* ID를 제공해 도큐먼트 색인 */
+===================================================================
+PUT /catalog/product/1
+{
+  "sku": "SP000001",
+  "title": "Google Pixel Phone 32GB - 5 inch display",
+  "description": "Google Pixel Phone 32GB - 5 inch display (Factory Unlocked US Version)",
+  "price": 400,
+  "resolution": "1440 * 2560 pixels",
+  "os": "Android 7.1"
+}
+===================================================================
+
+/* ID를 제공하지 않고 도큐먼트 색인 */
+===================================================================
+POST /catalog/product/
+{
+  "sku": "SP000002",
+  "title": "Mastering Elasticsearch",
+  "description": "Mastering Elasticsearch",
+  "author": "BharviDixit",
+  "price": 54.99
+}
+===================================================================
+
+/* 조회 API */
+===================================================================
+GET /catalog/product/1
+
+/* 업데이트 API */
+POST /catalog/product/1/_update
+{
+  "doc": {
+    "price": 500
+  }
+}
+===================================================================
+
+/* 기존 값을 활용한 업데이트 API */
+===================================================================
+POST /catalog/_update/2
+{
+  "script": {
+    "inline": "ctx._source.price += params.increment",
+    "lang": "painless",
+    "params": {
+      "increment": 2
+    }
+  }
+}
+===================================================================
+
+/* MERGE API */
+===================================================================
+POST /catalog/_update/1
+{
+  "doc": {
+    "author": "Albert Paro",
+    "title": "Elasticsearch 5.0 Cookbook",
+    "description": "Elasticsearch 5.0 Cookbook Third Edition",
+    "price": 54.99
+  },
+  "doc_as_upsert": true
+}
+===================================================================
+
+/* 삭제 API */
+===================================================================
+DELETE /catalog/product/2
+
+/* 인덱스 생성 */
+PUT /catalog
+{
+  "settings": {
+    "index": {
+      "number_of_shards": 5,
+      "number_of_replicas": 2
+    }
+  }
+}
+===================================================================
+
+/* 인덱스 생성 with 타입 매핑 */
+===================================================================
+PUT /catalog
+{
+  "settings": {
+    "index": {
+      "number_of_shards": 5,
+      "number_of_replicas": 2
+    }
+  },
+  "mappings": {
+    "my_type": {
+      "properties": {
+        "f1": {
+          "type": "text"
+        },
+        "f2": {
+          "type": "keyword"
+        }
+      }
+    }
+  }
+}
+===================================================================
+
+/* 매핑 조회 */
+===================================================================
+GET /catalog/_mapping/
+===================================================================
+
+/* 클러스터의 모든 인덱스에서 모든 도큐먼트를 검색 */
+===================================================================
+GET /_search [실제 반환되는 도큐먼트의 수는 default 10개]
+GET /_search?size=100
+===================================================================
+
+/* 단일 인덱스에서 모든 도큐먼트 검색 */
+===================================================================
+GET catalog/_search
+GET catalog/product/_search [타입까지 지정]
+===================================================================
+
+/* 다중 인덱스에서 모든 도큐먼트 검색 */
+===================================================================
+GET index1,index2/_search [index1, index2에서 모든 0도큐먼트 검색]
+===================================================================
+
+/* 모든 인덱스에서 특정 타입의 모든 도큐먼트 검색 */
+===================================================================
+GET /_all/product/_search [product 타입의 도큐먼트만 검색]
+===================================================================
+
+/* 표준 토크나이저 예시 */
+===================================================================
+POST _analyze 
+{
+  "tokenizer": "standard",
+  "text": "Tokenizer breaks characters into tokens!"
+}
+===================================================================
+
+/* 표준 분석기 사용1 */
+===================================================================
+PUT index_standard_analyzer
+{
+  "settings": {
+    "analysis": {
+      "analyzer" : {
+        "std" : {
+          "type": "standard"
+        }
+      }
+    }
+  },
+  "mappings" : {
+        "properties" : {
+            "my_text" : { "type" : "text", "analyzer": "std" }
+        }
+    }
+}
+
+POST index_standard_analyzer/_analyze
+{
+  "field": "my_text",
+  "text": "The Standard Analyzer works this way."
+}
+===================================================================
+
+/* 표준 분석기 사용2 - 불용어 토큰 필터 사용 */
+===================================================================
+PUT index_standard_analyzer_english_stopwords
+{
+  "settings": {
+    "analysis": {
+      "analyzer" : {
+        "std" : {
+          "type": "standard",
+          "stopwords": "_english_"
+        }
+      }
+    }
+  },
+  "mappings" : {
+        "properties" : {
+            "my_text" : { "type" : "text", "analyzer": "std" }
+        }
+    }
+}
+
+POST index_standard_analyzer_english_stopwords/_analyze
+{
+  "field": "my_text",
+  "text": "The Standard Analyzer works this way."
+}
+===================================================================
+
+/* 표준 분석기 사용3 - 자동완성 */
+===================================================================
+PUT custom_analyzer_index
+{
+  "settings": {
+    "analysis": {
+      "analyzer" : {
+        "custom_analyzer" : {
+          "type": "custom",
+          "tokenizer": "standard",
+          "filter": [
+            "lowercase", "custom_edge_ngram"  
+          ]
+        }
+      },
+      "filter": {
+        "custom_edge_ngram": {
+          "type": "edge_ngram",
+          "min_gram": 2,
+          "max_gram": 10
+        }
+      }
+    }
+  },
+  "mappings" : {
+        "properties" : {
+            "product" : { 
+              "type" : "text", 
+              "analyzer": "custom_analyzer", 
+              "search_analyzer": "standard"
+            }
+        }
+    }
+}
+
+POST /custom_analyzer_index/_doc
+{
+  "product": "Learning Elastic Stack 6"
+}
+
+
+POST /custom_analyzer_index/_doc
+{
+  "product": "Mastering Elasticsearch"
+}
+
+GET /custom_analyzer_index/_search
+{
+  "query": {
+    "match": {
+      "product": "Ela"
+    }
+  }
+}
+===================================================================
+
+
+/* 구조화된 데이터 검색1 - index생성 */
+===================================================================
+PUT /amazon_products
+{
+  "settings": {
+    "number_of_shards": 1,
+    "number_of_replicas": 0,
+    "analysis": {
+      "analyzer": {}
+    }
+  },
+  "mappings": {
+    "properties": {
+      "id": {
+        "type": "binary"
+      },
+      "title": {
+        "type": "text"
+      },
+      "description": {
+        "type": "text"
+      },
+      "manufacturer": {
+        "type": "text",
+        "fields": {
+          "raw": {
+            "type": "keyword"
+          }
+        }
+      },
+      "price": {
+        "type": "scaled_float",
+        "scaling_factor":100
+      }
+    }
+  }
+}
+===================================================================
+
+/* 구조화된 데이터 검색2 - 데이터 입력 - Windows logstash실행1 */
+===================================================================
+$LOGSTASH_HOME ./bin/logstash.bat -f %CONFIG_HOME%/%CONFIG_FILE%
+logstash.bat -f D:\ELK\logstash-7.5.2\logstash-7.5.2\config\logstash_products.conf
+===================================================================
+
+/* 구조화된 데이터 검색2 - 데이터 입력 - Windows logstash실행2 - [logstash_products.conf 파일]*/
+===================================================================
+# sincedb_path 옵션에 정확한 파일명을 명시해 주어야 한다.
+input {
+  file {
+    path => "D:/ELK/data/Amazon-GoogleProducts/GoogleProducts.csv"
+    start_position => "beginning"
+	sincedb_path => "D:/ELK/logstash-7.5.2/logstash-7.5.2/logs/sincedb/sincedb_path.txt"
+    codec => plain {
+      charset => "ISO-8859-1"
+    }
+  }
+}
+filter {
+  csv {
+    separator => ","
+    columns => ["id","title","description","manufacturer","price"]
+  }
+
+  mutate {
+    remove_field => ["@version","@timestamp","path","host", "tags", "message"]
+  } 
+}
+output {
+  elasticsearch {
+    hosts => "http://localhost:9200"
+    index => "amazon_products"
+  }
+  stdout {}
+}
+===================================================================
+
+/* 구조화된 데이터 검색3*/
+===================================================================
+GET /amazon_products/_search
+{
+  "query": {
+    "match_all": {}
+  }
+}
+===================================================================
+
+/* 구조화된 데이터 검색4*/
+===================================================================
+GET /amazon_products/_search
+{
+  "query": {
+    "match_all": {}
+  }
+}
+===================================================================
+
+/* 구조화된 데이터 검색4* - RANGE쿼리/
+===================================================================
+GET /amazon_products/_search
+{
+  "query": {
+    "range": {
+      "price" : {
+        "gte": 10,
+        "lte": 20
+      }
+    }
+  }
+}
+===================================================================
+
+/* 구조화된 데이터 검색5* - RANGE쿼리 - boost/
+===================================================================
+# from / size 옵션은 반환되는 결과를 몇개까지 보여줄 것이냐와 관련
+GET /amazon_products/_search
+{
+  "from": 0,
+  "size": 20,
+  "query": {
+    "range": {
+      "price": {
+        "gte": 10,
+        "lte": 20,
+        "boost": 2.2
+      }
+    }
+  }
+}
+===================================================================
+
+/* 구조화된 데이터 검색6* - RANGE쿼리 - Date형 검색/
+===================================================================
+GET /orders/_search
+{
+  "query": {
+    "range": {
+      "orderDate": {
+        "gte": "2017/09/01",
+        "lte": "2017/09/30", 
+        "format": "yyyy/MM/dd"
+    }
+  }
+}
+
+GET /orders/_search
+{
+  "query": {
+    "range": {
+      "orderDate": {
+        "gte": "now-7d",
+        "lte": "now", 
+    }
+  }
+}
+===================================================================
+
+/* 구조화된 데이터 검색7* - Exists 쿼리 */
+===================================================================
+GET /amazon_products/_search
+{
+  "query": {
+    "exists": {
+      "field": "description"
+    }
+  }
+}
+===================================================================
+
+/* 구조화된 데이터 검색8* - Term 쿼리 */
+===================================================================
+GET /amazon_products/_search
+{
+  "query": {
+    "term": {
+      "manufacturer.raw": "activision"
+    }
+  }
+}
+
+
+GET /amazon_products/_search
+{
+  "query": {
+    "constant_score": {
+      "filter": {
+        "term": {
+             "manufacturer.raw": "activision"   
+        }
+      }
+    }
+  }
+}
+===================================================================
+
+/* 전문 텍스트 검색 - Match쿼리 */
+===================================================================
+GET /amazon_products/_search
+{
+  "query": {
+    "match": {
+      "manufacturer.raw": "activision"
+    }
+  }
+}
+
+GET /amazon_products/_search
+{
+  "query": {
+    "term": {
+      "manufacturer.raw": "activision"
+    }
+  }
+}
+===================================================================
+
+/* 전문 텍스트 검색 - Match쿼리 - operator */
+===================================================================
+GET /amazon_products/_search
+{
+  "from": 0,
+  "size":20,
+  "query": {
+    "match": {
+      "manufacturer": {
+       "query": "apple software",
+       "operator": "and"
+      }
+    }
+  }
+}
+===================================================================
+
+/* 전문 텍스트 검색 - Match쿼리 - minimum_should_match */
+===================================================================
+GET /amazon_products/_search
+{
+  "from": 0,
+  "size":20,
+  "query": {
+    "match": {
+      "manufacturer": {
+       "query": "apple software",
+       "minimum_should_match": 2
+      }
+    }
+  }
+}
+===================================================================
+
+/* 전문 텍스트 검색 - Match쿼리 - fuzziness */
+===================================================================
+GET /amazon_products/_search
+{
+  "from": 0,
+  "size":20,
+  "query": {
+    "match": {
+      "manufacturer": {
+       "query": "appl software",
+       "fuzziness": 1,
+       "minimum_should_match":2
+      }
+    }
+  }
+}
+
+GET /amazon_products/_search
+{
+  "from": 0,
+  "size":20,
+  "query": {
+    "match": {
+      "manufacturer": {
+       "query": "appl softwa",
+       "fuzziness": 2,
+       "minimum_should_match":2
+      }
+    }
+  }
+}
+===================================================================
+
+/* 전문 텍스트 검색 - Match Phrase */
+===================================================================
+GET /amazon_products/_search
+{
+  "query": {
+    "match_phrase": {
+      "description":"adventures tailored specifically to the player's personality type"
+    }
+  }
+}
+
+GET /amazon_products/_search
+{
+  "query": {
+    "match_phrase": {
+      "description":{
+        "query": "adventures specifically to the player's personality type",
+        "slop": 1
+      }
+    }
+  }
+}
+===================================================================
+
+/* 전문 텍스트 검색 - Match Match */
+===================================================================
+GET /amazon_products/_search
+{
+  "query": {
+    "multi_match": {
+      "query": "monitor aquarium",
+      "fields": ["title", "description"]
+    }
+  }
+}
+
+GET /amazon_products/_search
+{
+  "query": {
+    "multi_match": {
+      "query": "monitor aquarium",
+      "fields": ["title^3", "description"]
+    }
+  }
+}
+===================================================================
+
+/* 복합 쿼리 작성 - constant_score 쿼리 */
+===================================================================
+GET /amazon_products/_search
+{
+  "query": {
+    "term": {
+      "manufacturer.raw": "activision"   
+    }
+  }
+}
+
+GET /amazon_products/_search
+{
+  "query": {
+    "constant_score": {
+      "filter": {
+        "term": {
+             "manufacturer.raw": "activision"   
+        }
+      }
+    }
+  }
+}
+
+GET /amazon_products/_search
+{
+  "query": {
+    "constant_score": {
+      "filter": {
+        "term": {
+             "manufacturer.raw": "activision"   
+        }
+      },
+      "boost":1.2
+    }
+  }
+}
+===================================================================
+
+
+
+
+
+
+
+
+
+
