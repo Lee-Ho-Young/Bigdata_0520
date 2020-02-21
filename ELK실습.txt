@@ -1,3 +1,5 @@
+https://www.elastic.co/kr/blog/a-practical-introduction-to-logstash
+
 /* ID를 제공해 도큐먼트 색인 */
 ===================================================================
 PUT /catalog/product/1
@@ -622,12 +624,563 @@ GET /amazon_products/_search
 }
 ===================================================================
 
+/* Bool쿼리 */
+===================================================================
+-- should : OR
+-- must : AND
+-- 
+
+-- 가격이 10~13인 제품 또는 제조사가 activision인 모든 제품 검색
+GET /amazon_products/_search
+{
+  "query": {
+    "constant_score": {
+      "filter": {
+        "bool":{
+          "should": [
+            {
+              "range": {
+                "price": {
+                  "gte":10,
+                  "lte":13
+                }
+              }
+            },
+            {
+                "term":{
+                  "manufacturer.raw": {
+                    "value": "activision"
+                  }
+                }
+            }
+          ]
+        }
+      }
+    }
+  }
+}
+
+-- 가격이 10~13이면서 제조사가 activision 또는 pinnacle인 모든 제품 검색
+GET /amazon_products/_search
+{
+  "query": {
+    "constant_score": {
+      "filter": {
+        "bool":{
+          "must": [
+            {
+              "range": {
+                "price": {
+                  "gte":10,
+                  "lte":13
+                }
+              }
+            }
+          ],
+          "should": [
+            {
+              "term": {
+                "manufacturer.raw": {
+                  "value": "activision"
+                }
+              }
+            },
+            {
+              "term": {
+                "manufacturer.raw": {
+                  "value": "pinnacle"
+                }
+              }
+            }
+          ]
+        }
+      }
+    }
+  }
+}
+
+-- 가격이 30~40이면서 activision에서 제조한 제품을 제외
+GET /amazon_products/_search
+{
+  "query": {
+    "constant_score": {
+      "filter": {
+        "bool": {
+          "must": [
+            {
+              "range": {
+                "price": {
+                  "gte":30,
+                  "lte":40
+                }
+              }
+            }
+          ]
+        }
+      }
+    }
+  }
+}
+
+GET /amazon_products/_search
+{
+  "query": {
+    "constant_score": {
+      "filter": {
+        "bool": {
+          "must": [
+            {
+              "range": {
+                "price": {
+                  "gte":30,
+                  "lte":40
+                }
+              }
+            }
+          ],
+          "must_not": [
+            {
+              "term": {
+                "manufacturer.raw":"activision"
+              }
+            }
+          ]
+        }
+      }
+    }
+  }
+}
+-- must_not 구문은 항상 필터 컨텍스트에서 실행되므로, cnostant_score 쿼리로 감쌀 필요는 없다.
+GET /amazon_products/_search
+{
+  "query": {
+        "bool": {
+          "must": [
+            {
+              "range": {
+                "price": {
+                  "gte":30,
+                  "lte":40
+                }
+              }
+            }
+          ],
+          "must_not": [
+            {
+              "term": {
+                "manufacturer.raw":"activision"
+              }
+            }
+          ]
+        }
+  }
+}
+===================================================================
+
+/* 집계1*/
+===================================================================
+POST /<index_name>/_search
+{
+	"aggs": {...집계 타입...},	 //필수사항
+	"query": {...쿼리 타입...}, //선택사항 [집계 대상을 추출]
+	"size":0
+}
+logstash.bat -f D:\ELK\logstash-7.5.2\logstash-7.5.2\config\logstash_network_traffic_data.conf
+===================================================================
+
+/* 집계2 - 합계/평균/최소/최대 */
+===================================================================
+GET /bigginsight/_search
+{
+  "aggregations": {
+    "download_sum": {
+      "sum": {
+        "field": "downloadTotal"
+      }
+    }
+  },
+  "size":0
+}
+
+GET /bigginsight/_search
+{
+  "aggs":{
+    "download_average": {
+      "avg": {
+        "field": "downloadTotal"
+      }
+    }
+  },
+  "size":0
+}
+  
+GET /bigginsight/_search
+{
+  "aggs":{
+    "download_min": {
+      "min": {
+        "field": "downloadTotal"
+      }
+    }
+  },
+  "size":0
+}
+
+GET /bigginsight/_search
+{
+  "aggs":{
+    "download_max": {
+      "max": {
+        "field": "downloadTotal"
+      }
+    }
+  },
+  "size":0
+}
+===================================================================
 
 
+/* 집계3 - stat */
+===================================================================
+GET bigginsight/_search
+{
+  "aggs": {
+    "download_stats": {
+      "stats": {
+        "field": "downloadTotal"
+      }
+    }
+  },
+  "size":0
+}
+  
+GET bigginsight/_search
+{
+  "aggs": {
+    "download_estats": {
+      "extended_stats": {
+        "field": "downloadTotal"
+      }
+    }
+  },
+  "size":0
+}
+===================================================================
 
+/* 집계4 - Cardinality */
+===================================================================
+PUT /bigginsight/_mapping 
+{
+  "properties": {
+    "username": {
+      "type": "text",
+      "fielddata": true
+    }
+  }
+}
 
+GET /bigginsight/_search
+{
+  "aggs": {
+    "unique_visitors": {
+      "cardinality": {
+        "field": "username"
+      }
+    }
+  },
+  "size":0
+}
+===================================================================
 
+/* 집계5 - Terms1 */
+===================================================================
+-- text로 설정되어 있으면 단어 단위로 끊어짐 [keyword로 필드가 설정되어 있어야 함]
+GET /bigginsight/_search
+{
+  "aggs": {
+    "byCategory": {
+      "terms": {
+        "field": "category"
+      }
+    }
+  },
+  "size":0
+}
 
+GET /bigginsight/_search
+{
+  "query":{
+    "match":{"category":"http"}
+  }
+}  
+===================================================================
 
+/* 집계6 - Terms2 */
+===================================================================
+PUT /bigginsight/_mapping 
+{
+  "properties": {
+    "application": {
+      "type": "text",
+      "fielddata": true
+    }
+  }
+}
 
+GET /bigginsight/_search?size=0
+{
+  "aggs": {
+    "byApplication": {
+      "terms": {
+        "field": "application"
+      }
+    }
+  }
+}
 
+GET /bigginsight/_search?size=0
+{
+  "aggs": {
+    "byApplication": {
+      "terms": {
+        "field": "application",
+        "size": 40
+      }
+    }
+  }
+}
+===================================================================
+
+/* 집계7 - Histogram 집계 */
+===================================================================
+POST /bigginsight/_search?size=0
+{
+  "aggs": {
+    "by_usage": {
+      "histogram": {
+        "field": "usage",
+        "interval": 1000
+      }
+    }
+  }
+}
+
+POST /bigginsight/_search?size=0
+{
+  "aggs": {
+    "by_usage": {
+      "histogram": {
+        "field": "usage",
+        "interval": 1000,
+        "min_doc_count": 1000
+      }
+    }
+  }
+}
+===================================================================
+
+/* 집계8 - Range 집계 */
+===================================================================
+POST /bigginsight/_search?size=0
+{
+  "aggs": {
+    "by_usage": {
+      "range": {
+        "field": "usage",
+        "ranges": [
+          {"to": 1024 },
+          {"from": 1024, "to": 102400},
+          {"from": 102400 }
+        ]
+      }
+    }
+  }
+}
+
+POST /bigginsight/_search?size=0
+{
+  "aggs": {
+    "by_usage": {
+      "range": {
+        "field": "usage",
+        "ranges": [
+          {"key":"Upto 1 kb", "to": 1024 },
+          {"key":"1kb to 100kb", "from": 1024, "to": 102400},
+          {"key":"100kb and more", "from": 102400 }
+        ]
+      }
+    }
+  }
+}
+===================================================================
+
+/* 집계9 - 필터 데이터 집계 */
+===================================================================
+GET /bigginsight/_search?size=0
+{
+  "query": {
+    "term": {
+      "customer": "linkedin"
+    }
+  },
+  "aggs": {
+    "byCategory": {
+      "terms": {
+        "field": "category"
+      }
+    }
+  }
+}
+
+GET /bigginsight/_search?size=0
+{
+  "query": {
+    "bool": {
+      "must": [
+        {"term": {"customer": "linkedin"}},
+        {"range":{"time": {"gte":1506277800000, "lte": 1506294200000 }}}
+      ]
+    }
+  },
+  "aggs": {
+    "byCategory": {
+      "terms": {
+        "field": "category"
+      }
+    }
+  }
+}
+===================================================================
+
+/* 집계10 - 중첩 집계 */
+===================================================================
+GET /bigginsight/_search?size=0
+{
+  "query": {
+    "bool": {
+      "must": [
+        {"term": {"customer": "linkedin"}},
+        {"range": {"time": {"gte":1506257800000, "lte": 1506314200000}}}
+      ]
+    }
+  },
+  "aggs": {
+    "by_users": {
+      "terms": {
+        "field": "username", 
+        "size": 50
+      },
+      "aggs": {
+        "total_usage": {
+          "sum": {"field": "usage"}
+        }
+      }
+    }
+  }
+}
+
+GET /bigginsight/_search?size=0
+{
+  "query": {
+    "bool": {
+      "must": [
+        {"term": {"customer": "linkedin"}},
+        {"range": {"time": {"gte":1506257800000, "lte": 1506314200000}}}
+      ]
+    }
+  },
+  "aggs": {
+    "by_users": {
+      "terms": {
+        "field": "username", 
+        "order": {"total_usage": "asc"},
+        "size": 50
+      },
+      "aggs": {
+        "total_usage": {
+          "sum": {"field": "usage"}
+        }
+      }
+    }
+  }
+}
+
+-- 사용자별 전체 대역폭을 고려할 때 부서마다 상위 두 명을 선발
+POST /bigginsight/_mapping
+{
+  "properties": {
+    "department": {
+      "type": "text",
+      "fielddata": true
+    }
+  }
+}
+
+GET /bigginsight/_search?size=0
+{
+  "query": {
+    "bool": {
+      "must": [
+        {"term": {"customer": "linkedin"}},
+        {"range": {"time": {"gte":1506257800000, "lte": 1506314200000}}}
+      ]
+    }
+  },
+  "aggs": {
+    "by_departments": {
+      "terms": {"field": "department"},
+      "aggs": {
+        "by_users": {
+          "terms": {
+            "field": "username",
+            "size":2,
+            "order": {"total_usage": "desc"}
+          },
+          "aggs": {
+            "total_usage": {"sum": {"field": "usage"}}
+          }
+        }
+      }
+    }
+  }
+}
+===================================================================
+
+/* 집계11 - Filter 집계 */
+===================================================================
+POST /bigginsight/_search?size=0
+{
+  "aggs": {
+    "chat": {
+      "filter": {
+        "term": {
+          "category": "chat"
+        }
+      }
+    }
+  } 
+}
+===================================================================
+
+/* 집계12 - Filters 집계 */
+===================================================================
+GET /bigginsight/_search?size=0
+{
+  "aggs": {
+    "messages": {
+      "filters": {
+        "filters": {
+          "chat":  { "match": {"category": "chat"}},
+          "skype": { "match": {"application": "skype"}},
+          "other_than_skype": {
+            "bool": {
+              "must": {"match": {"category": "chat"}},
+              "must_not": {"match": {"application": "skype"}}
+            }
+          }
+        }
+      }
+    }
+  }
+}
+===================================================================
